@@ -16,7 +16,7 @@ if __name__ == "__main__":
     # input_buffer_value.value = "102 102"
 
 
-    communication_simulator = CommunicationSimulator(drop_rate=0.01, bitflip_rate=0.01)
+    communication_simulator = CommunicationSimulator(drop_rate=0.005, bitflip_rate=0.001)
     # communication_simulator = CommunicationSimulator(drop_rate=0.00, bitflip_rate=0.00)
     communication_simulator.set_buffer("101 101".encode('utf-8'))
 

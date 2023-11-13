@@ -56,6 +56,7 @@ def rx_drawing(shared_input_buffer_name: str, communications_simulator: Communic
                             if stripped[0] == "clean":
                                 # clear canvas or something
                                 screen.fill((0, 0, 0))
+                                coords = []
                         else:
                             x, y = int(stripped[0]), int(stripped[1])
                             coords.append([x, y])
