@@ -12,9 +12,9 @@ PACK_CODE = ">hhBB"
 
 if __name__ == "__main__":
 
-    # initialize shared memory list
-    # s1 = shared_memory.ShareableList([pack(PACK_CODE, 255, 255, 255, 255)])
-    # s1 = shared_memory.ShareableList(b'\x00\x00\x00\x00\x00\x00\x00\x00')
+    # initialize shared memory
+    # NOTE: the size is the number of bytes
+    # if we ever increase/decrease the number of bytes, we need to change this here & in the if __name__ == "main" functions
     s1 = shared_memory.SharedMemory(name='s1', create=True, size=6)
     
     # s1.buf = pack(PACK_CODE, 255, 255, 255, 255)

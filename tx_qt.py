@@ -1,9 +1,4 @@
 import sys
-'''uncomment if on pi'''
-# import board
-# import digitalio
-# import adafruit_si4713
-
 from PyQt5 import QtGui, QtWidgets
 from PyQt5.QtCore import Qt, QTime, QTimer
 from struct import *
@@ -11,8 +6,11 @@ from multiprocessing import shared_memory
 from binascii import hexlify
 from utils import my_memcpy
 
-# def tx_drawing(shared_input_buffer_name: str): 
-'''uncomment if on pi'''
+'''RASPBERRY PI: use below'''
+# import board
+# import digitalio
+# import adafruit_si4713
+
 # FREQUENCY_KHZ = 87700
 # i2c = board.I2C()
 # si_reset = digitalio.DigitalInOut(board.D5)
@@ -37,6 +35,7 @@ from utils import my_memcpy
 # print("Broadcasting...")
 
 # si4713.configure_rds(0xADAF, station=bytes('(1,1), (2,2), (3,3), (4,4), (5,5), (6,6), (7,7), (8,8), (9,9), (10,10)', 'utf-8'), rds_buffer=bytes('(1,1), (2,2), (3,3), (4,4), (5,5), (6,6), (7,7), (8,8), (9,9), (10,10)', 'utf-8'))
+'''RASPBERRY PI: use above'''
 
 DELAY = 300
 PACK_CODE = '>hhBB'
@@ -119,14 +118,17 @@ class MainWindow(QtWidgets.QMainWindow):
         if (not len(self.coords)):
             return
         coords = self.coords.pop(0)
-        print(self.time.toString(), hexlify(coords))
-        print(self.time.toString(), unpack(PACK_CODE, coords))
-        '''uncomment if on pi'''
-        # si4713._set_rds_buffer(coords)
 
+        '''PI: use below'''
+        # si4713._set_rds_buffer(coords)
+        '''PI: use above'''
+
+        '''SIMULATOR: use below'''
+        # it should be OK to leave this uncommented, even on Pi
         my_memcpy(self.shared_memory, coords)
-        # self.shared_memory = coords
-        print(self.time.toString(), 's2', hexlify(self.shared_memory.buf))
+        '''SIMULATOR: use above'''
+        
+        print(self.time.toString(), 's2', hexlify(coords))
 
 def tx_qt_main_func(shared_input_buffer_name: str):
     app = QtWidgets.QApplication(sys.argv)
@@ -135,9 +137,8 @@ def tx_qt_main_func(shared_input_buffer_name: str):
     app.exec()
 
 if __name__ == '__main__':
+    # it should be OK to leave this uncommented, even on Pi
     s1 = shared_memory.SharedMemory(name='s1', create=True, size=6)
-    
-    # s1.buf = pack(PACK_CODE, 255, 255, 255, 255)
     pack_data = pack(PACK_CODE, 255, 255, 255, 255)
     my_memcpy(s1, pack_data)
     print(s1.buf)
