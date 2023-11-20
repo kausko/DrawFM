@@ -1,10 +1,11 @@
 import sys
 from PyQt5 import QtGui, QtWidgets
 from PyQt5.QtCore import Qt, QTime, QTimer
-from struct import *
+# from struct import *
 from multiprocessing import shared_memory
 from binascii import hexlify
 from utils import my_memcpy
+from bitstruct import *
 
 '''RASPBERRY PI: use below'''
 # import board
@@ -38,7 +39,14 @@ from utils import my_memcpy
 '''RASPBERRY PI: use above'''
 
 DELAY = 300
-PACK_CODE = '>hhBB'
+# PACK_CODE = '>hhBB'
+PACK_CODE = 'u10u10u6u6'
+
+PACK_CODES = {
+    'draw': 'u10u10u4u4u4',
+    'color': 'u8u8u8u4u4',
+    'size': 'u10u18u4'
+}
 
 class MainWindow(QtWidgets.QMainWindow):
 
@@ -81,7 +89,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.last_y = y
 
             # self.coords.append(bytes(f"{x} {y} p", 'utf-8'))
-            self.coords.append(pack(PACK_CODE, x, y, self.line_code, 0))
+            self.coords.append(pack(PACK_CODES['draw'], x, y, self.line_code, 0, 0))
             return # Ignore the first time.
 
         canvas = self.label.pixmap()
@@ -96,22 +104,26 @@ class MainWindow(QtWidgets.QMainWindow):
         self.last_y = y
 
         # self.coords.append(bytes(f"{x} {y} d", 'utf-8'))
-        self.coords.append(pack(PACK_CODE, x, y, self.line_code, 0))
+        self.coords.append(pack(PACK_CODES['draw'], x, y, self.line_code, 0, 0))
 
     def _mouseReleaseEvent(self, e):
         self.last_x = None
         self.last_y = None
-        self.line_code = 0 if self.line_code == 255 else 255
+        self.line_code = 0 if self.line_code == 15 else 15
     
     def colorChangeEvent(self):
         self.color = QtWidgets.QColorDialog.getColor()
+        (r, g, b, a) = self.color.getRgb()
+        a = a // 16
+        print('COLOR', r, g, b, a)
+        self.coords.append(pack(PACK_CODES['color'], r, g, b, a, 15))
 
     def clearEvent(self):
         canvas = self.label.pixmap()
         canvas.fill(Qt.white)
         self.label.setPixmap(canvas)
         # self.coords.append(bytes("clear", 'utf-8'))
-        self.coords.append(pack(PACK_CODE, 0, 0, self.line_code, 255))
+        self.coords.append(pack(PACK_CODES['draw'], 0, 0, self.line_code, 15, 0))
 
     def send_coords(self):
         self.time = self.time.addMSecs(DELAY)
@@ -139,7 +151,8 @@ def tx_qt_main_func(shared_input_buffer_name: str):
 if __name__ == '__main__':
     # it should be OK to leave this uncommented, even on Pi
     s1 = shared_memory.SharedMemory(name='s1', create=True, size=6)
-    pack_data = pack(PACK_CODE, 255, 255, 255, 255)
+    pack_data = pack(PACK_CODES['draw'], 255, 255, 15, 15, 0, 0)
     my_memcpy(s1, pack_data)
     print(s1.buf)
+    # main function
     tx_qt_main_func(s1.name)
