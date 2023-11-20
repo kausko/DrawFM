@@ -7,36 +7,39 @@ from binascii import hexlify
 from utils import my_memcpy
 from bitstruct import *
 
-'''RASPBERRY PI: use below'''
-# import board
-# import digitalio
-# import adafruit_si4713
+sim = False
 
-# FREQUENCY_KHZ = 87700
-# i2c = board.I2C()
-# si_reset = digitalio.DigitalInOut(board.D5)
+if not sim:
+    '''RASPBERRY PI: use below'''
+    import board
+    import digitalio
+    import adafruit_si4713
 
-# print("initializing si4713 instance")
-# si4713 = adafruit_si4713.SI4713(i2c, reset=si_reset, timeout_s=0.5)
-# print("done")
+    FREQUENCY_KHZ = 87700
+    i2c = board.I2C()
+    si_reset = digitalio.DigitalInOut(board.D5)
 
-# noise = si4713.received_noise_level(FREQUENCY_KHZ)
-# print("Noise at {0:0.3f} mhz: {1} dBuV".format(FREQUENCY_KHZ / 1000.0, noise))
+    print("initializing si4713 instance")
+    si4713 = adafruit_si4713.SI4713(i2c, reset=si_reset, timeout_s=0.5)
+    print("done")
 
-# si4713.tx_frequency_khz = FREQUENCY_KHZ
-# si4713.tx_power = 115
+    noise = si4713.received_noise_level(FREQUENCY_KHZ)
+    print("Noise at {0:0.3f} mhz: {1} dBuV".format(FREQUENCY_KHZ / 1000.0, noise))
 
-# print("Transmitting at {0:0.3f} mhz".format(si4713.tx_frequency_khz / 1000.0))
-# print("Transmitter power: {0} dBuV".format(si4713.tx_power))
-# print(
-#     "Transmitter antenna capacitance: {0:0.2} pF".format(si4713.tx_antenna_capacitance)
-# )
+    si4713.tx_frequency_khz = FREQUENCY_KHZ
+    si4713.tx_power = 115
 
-# si4713.gpio_control(gpio1=True, gpio2=True)
-# print("Broadcasting...")
+    print("Transmitting at {0:0.3f} mhz".format(si4713.tx_frequency_khz / 1000.0))
+    print("Transmitter power: {0} dBuV".format(si4713.tx_power))
+    print(
+        "Transmitter antenna capacitance: {0:0.2} pF".format(si4713.tx_antenna_capacitance)
+    )
 
-# si4713.configure_rds(0xADAF, station=bytes('(1,1), (2,2), (3,3), (4,4), (5,5), (6,6), (7,7), (8,8), (9,9), (10,10)', 'utf-8'), rds_buffer=bytes('(1,1), (2,2), (3,3), (4,4), (5,5), (6,6), (7,7), (8,8), (9,9), (10,10)', 'utf-8'))
-'''RASPBERRY PI: use above'''
+    si4713.gpio_control(gpio1=True, gpio2=True)
+    print("Broadcasting...")
+
+    si4713.configure_rds(0xADAF, station=bytes('(1,1), (2,2), (3,3), (4,4), (5,5), (6,6), (7,7), (8,8), (9,9), (10,10)', 'utf-8'), rds_buffer=bytes('(1,1), (2,2), (3,3), (4,4), (5,5), (6,6), (7,7), (8,8), (9,9), (10,10)', 'utf-8'))
+    '''RASPBERRY PI: use above'''
 
 DELAY = 300
 # PACK_CODE = '>hhBB'
@@ -109,7 +112,6 @@ class MainWindow(QtWidgets.QMainWindow):
             self.last_x = x
             self.last_y = y
 
-            # self.coords.append(bytes(f"{x} {y} p", 'utf-8'))
             self.coords.append(pack(PACK_CODES['draw'], x, y, self.line_code, 0, 0))
             return # Ignore the first time.
 
@@ -124,7 +126,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self.last_x = x
         self.last_y = y
 
-        # self.coords.append(bytes(f"{x} {y} d", 'utf-8'))
         self.coords.append(pack(PACK_CODES['draw'], x, y, self.line_code, 0, 0))
 
     def _mouseReleaseEvent(self, e):
@@ -157,7 +158,8 @@ class MainWindow(QtWidgets.QMainWindow):
         coords = self.coords.pop(0)
 
         '''PI: use below'''
-        # si4713._set_rds_buffer(coords)
+        if not sim:
+            si4713._set_rds_buffer(coords)
         '''PI: use above'''
 
         '''SIMULATOR: use below'''
