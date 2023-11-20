@@ -134,7 +134,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.line_code = 0 if self.line_code == 15 else 15
     
     def colorChangeEvent(self):
-        self.color = QtWidgets.QColorDialog.getColor()
+        self.color = QtWidgets.QColorDialog.getColor(options=QtWidgets.QColorDialog.ShowAlphaChannel)
         self.coords.append(self._getColorMessage())
     
     def brushSizeChangeEvent(self):
