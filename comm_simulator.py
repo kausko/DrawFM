@@ -20,14 +20,17 @@ class CommunicationSimulator():
         # print('self.in_buffer:', self.in_buffer)
 
         ndarray_bool = bytes_to_ndarray_bool(self.in_buffer)
+        # print(ndarray_bool)
 
         bitmask = np.random.choice([True, False], size=len(ndarray_bool), p=[self.bitflip_rate, 1 - self.bitflip_rate])
 
         # xor to bitflip
         ndarray_bool = ndarray_bool ^ bitmask
+        # print(ndarray_bool)
 
         # drop entire bytes
         msg_bytes = ndarray_bool_to_bytes(ndarray_bool)
+        # print('msg_bytes', msg_bytes)
 
         new_msg = bytearray()
         for byte in msg_bytes:

@@ -4,19 +4,22 @@ from comm_simulator import CommunicationSimulator
 from multiprocessing import shared_memory
 from time import sleep
 from struct import *
+from binascii import hexlify
 import time
+from utils import my_memcpy
 
-from si4703Library import si4703Radio
+'''uncomment if on pi'''
+# from si4703Library import si4703Radio
 
 def rx_drawing(shared_input_buffer_name: str, communications_simulator: CommunicationSimulator):
 
     # IF USING HARDWARE, USE THIS
-    radio = si4703Radio(0x10, 5, 19)
-    radio.si4703Init()
-    radio.si4703SetChannel(877)
-    radio.si4703SetVolume(5)
-    print(str(radio.si4703GetChannel()))
-    print(str(radio.si4703GetVolume()))
+    # radio = si4703Radio(0x10, 5, 19)
+    # radio.si4703Init()
+    # radio.si4703SetChannel(877)
+    # radio.si4703SetVolume(5)
+    # print(str(radio.si4703GetChannel()))
+    # print(str(radio.si4703GetVolume()))
 
     # pygame setup
     pygame.init()
@@ -40,6 +43,8 @@ def rx_drawing(shared_input_buffer_name: str, communications_simulator: Communic
 
     running = True
     try:
+        last_rds = None
+        last_data_line = 0
         while running:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -51,12 +56,7 @@ def rx_drawing(shared_input_buffer_name: str, communications_simulator: Communic
                 # try:
                 # rds = "100 100"
 
-                # IF SIMULATOR MODE, USE THIS
-                # rds = str(communications_simulator.in_buffer.decode())
-                # s2 = shared_memory.ShareableList(name=shared_input_buffer_name)
-                # tx_buffer = s2[0]
-                # communications_simulator.set_buffer(tx_buffer)
-                # rds = communications_simulator.get_buffer()
+
 
                 # IF USING HARDWARE, USE THIS
                 # rds = radio.si4703getRDSBytes()
@@ -66,17 +66,24 @@ def rx_drawing(shared_input_buffer_name: str, communications_simulator: Communic
                 
                 try:
                     # rds = radio.si4703getRDS()
-                    rds = radio.si4703getRDSBytes()
+
+                    '''for binary data (struct packing)'''
+                    # rds = radio.si4703getRDSBytes()
+
+                    # IF SIMULATOR MODE, USE THIS
+                    # rds = str(communications_simulator.in_buffer.decode())
+                    s2 = shared_memory.SharedMemory(name=shared_input_buffer_name)
+                    tx_buffer = s2.buf
+                    communications_simulator.set_buffer(tx_buffer)
+                    rds = communications_simulator.get_buffer()
 
 
-
-                    print('rds:', rds)
+                    # print('rds:', hexlify(rds))
                     # rds = rds.decode()
 
                     x = 0
                     y = 0
                     data_line = 0
-                    last_data_line = data_line
                     data_clean = 0
 
                     # invalid = 1
@@ -87,7 +94,7 @@ def rx_drawing(shared_input_buffer_name: str, communications_simulator: Communic
                     # have to select first number of bytes we want, becuse rds reader will give us extra zero bytes at end because
                     (x, y, data_line, data_clean) = unpack('>hhBB', rds[:6])
 
-                    print(x, y, data_line, data_clean, time.time())
+                    # print(x, y, data_line, data_clean, time.time())
 
                     # x += 128
 
@@ -111,32 +118,41 @@ def rx_drawing(shared_input_buffer_name: str, communications_simulator: Communic
                     #     elif stripped[2] == 'p':
                     #         invalid = 0
                     
-                    print(x, y, data_line, data_clean, time.time())
-
-                    coords.append([x, y])
                     
-                    if data_clean == 255:
-                        # clear canvas or something
-                        screen.fill((0, 0, 0))
-                        coords = []
-                    elif True:
-                        # print(coords)
-                        if data_line == 255 or data_line == 0:
-                            if data_line != last_data_line:
-                                # pygame.draw.lines(screen, (255, 255, 255), False, coords[:-1])
-                                coords = [coords[-1]]
-                                last_data_line = data_line
-                            else:
-                                pygame.draw.lines(screen, (255, 255, 255), False, coords)
-                            # pygame.draw.lines(screen, (255, 255, 255), False, coords[:-2])
-                            
 
-                            # coords = coords[-1]
-                        # else:
-                            pygame.draw.ellipse(screen, (255, 255, 255), pygame.Rect(x, y, 4, 4), 2)
-                            
-                        #     # coords.pop(0)
-                        #     coords = [[x, y]]
+                    if rds != last_rds:
+                        print(x, y, data_line, data_clean, time.time())
+                        coords.append([x, y])
+                        print('coords len:', len(coords))
+                        
+                        
+                        if data_clean == 255:
+                            # clear canvas or something
+                            screen.fill((0, 0, 0))
+                            coords = []
+                        elif True:
+                            # print(coords)
+                            if data_line == 255 or data_line == 0:
+                                print('data_line', data_line, 'last_data_line', last_data_line)
+                                if data_line != last_data_line:
+                                    # pygame.draw.lines(screen, (255, 255, 255), False, coords[:-1])
+                                    coords = [coords[-1]]
+                                    
+                                else:
+                                    pygame.draw.lines(screen, (255, 255, 255), False, [coords[-1], coords[-2]])
+                                    print(len(coords))
+                                # pygame.draw.lines(screen, (255, 255, 255), False, coords[:-2])
+                                
+                                last_data_line = data_line
+                                print('data_line2', data_line, 'last_data_line2', last_data_line)
+                                # coords = coords[-1]
+                            # else:
+                                # pygame.draw.ellipse(screen, (255, 255, 255), pygame.Rect(x, y, 4, 4), 2)
+                                
+                            #     # coords.pop(0)
+                            #     coords = [[x, y]]
+                    
+                    last_rds = rds
 
                 except Exception as e:
                     print(e)
@@ -147,7 +163,7 @@ def rx_drawing(shared_input_buffer_name: str, communications_simulator: Communic
 
             pygame.display.flip()
             clock.tick(60)
-            # sleep(0.05)
+            # sleep(0.1)
                 
     except KeyboardInterrupt:
         print("Exiting program")
@@ -157,12 +173,15 @@ def rx_drawing(shared_input_buffer_name: str, communications_simulator: Communic
     pygame.quit()
 
 if __name__ == "__main__":
-    s1 = shared_memory.ShareableList(["large buffer for our strings"])
-    s1[0] = "100 100 p".encode('utf-8')
+    PACK_CODE = '>hhBB'
+
+    s1 = shared_memory.SharedMemory(name='s1', create=True, size=6)
+    pack_data = pack(PACK_CODE, 255, 255, 255, 0)
+    my_memcpy(s1, pack_data)
     communication_simulator = CommunicationSimulator(drop_rate=0.01, bitflip_rate=0.01)
-    rx_drawing(shared_input_buffer_name=s1.shm.name, communications_simulator=communication_simulator)
+    rx_drawing(shared_input_buffer_name=s1.name, communications_simulator=communication_simulator)
 
-
+    '''this is for the library function'''
     # def si4703getRDSBytes(self):        
     #     z = "000000000000000"
     #     msg = {}

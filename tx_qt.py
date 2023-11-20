@@ -1,44 +1,53 @@
 import sys
-import board
-import digitalio
-import adafruit_si4713
+'''uncomment if on pi'''
+# import board
+# import digitalio
+# import adafruit_si4713
 
 from PyQt5 import QtGui, QtWidgets
 from PyQt5.QtCore import Qt, QTime, QTimer
 from struct import *
+from multiprocessing import shared_memory
+from binascii import hexlify
+from utils import my_memcpy
 
-FREQUENCY_KHZ = 87700
-i2c = board.I2C()
-si_reset = digitalio.DigitalInOut(board.D5)
+# def tx_drawing(shared_input_buffer_name: str): 
+'''uncomment if on pi'''
+# FREQUENCY_KHZ = 87700
+# i2c = board.I2C()
+# si_reset = digitalio.DigitalInOut(board.D5)
 
-print("initializing si4713 instance")
-si4713 = adafruit_si4713.SI4713(i2c, reset=si_reset, timeout_s=0.5)
-print("done")
+# print("initializing si4713 instance")
+# si4713 = adafruit_si4713.SI4713(i2c, reset=si_reset, timeout_s=0.5)
+# print("done")
 
-noise = si4713.received_noise_level(FREQUENCY_KHZ)
-print("Noise at {0:0.3f} mhz: {1} dBuV".format(FREQUENCY_KHZ / 1000.0, noise))
+# noise = si4713.received_noise_level(FREQUENCY_KHZ)
+# print("Noise at {0:0.3f} mhz: {1} dBuV".format(FREQUENCY_KHZ / 1000.0, noise))
 
-si4713.tx_frequency_khz = FREQUENCY_KHZ
-si4713.tx_power = 115
+# si4713.tx_frequency_khz = FREQUENCY_KHZ
+# si4713.tx_power = 115
 
-print("Transmitting at {0:0.3f} mhz".format(si4713.tx_frequency_khz / 1000.0))
-print("Transmitter power: {0} dBuV".format(si4713.tx_power))
-print(
-    "Transmitter antenna capacitance: {0:0.2} pF".format(si4713.tx_antenna_capacitance)
-)
+# print("Transmitting at {0:0.3f} mhz".format(si4713.tx_frequency_khz / 1000.0))
+# print("Transmitter power: {0} dBuV".format(si4713.tx_power))
+# print(
+#     "Transmitter antenna capacitance: {0:0.2} pF".format(si4713.tx_antenna_capacitance)
+# )
 
-si4713.gpio_control(gpio1=True, gpio2=True)
-print("Broadcasting...")
+# si4713.gpio_control(gpio1=True, gpio2=True)
+# print("Broadcasting...")
 
-si4713.configure_rds(0xADAF, station=bytes('(1,1), (2,2), (3,3), (4,4), (5,5), (6,6), (7,7), (8,8), (9,9), (10,10)', 'utf-8'), rds_buffer=bytes('(1,1), (2,2), (3,3), (4,4), (5,5), (6,6), (7,7), (8,8), (9,9), (10,10)', 'utf-8'))
+# si4713.configure_rds(0xADAF, station=bytes('(1,1), (2,2), (3,3), (4,4), (5,5), (6,6), (7,7), (8,8), (9,9), (10,10)', 'utf-8'), rds_buffer=bytes('(1,1), (2,2), (3,3), (4,4), (5,5), (6,6), (7,7), (8,8), (9,9), (10,10)', 'utf-8'))
 
 DELAY = 300
 PACK_CODE = '>hhBB'
 
 class MainWindow(QtWidgets.QMainWindow):
 
-    def __init__(self):
+    def __init__(self, shared_input_buffer_name: str):
         super().__init__()
+
+        self.shared_input_buffer_name = shared_input_buffer_name
+        self.shared_memory = shared_memory.SharedMemory(name=self.shared_input_buffer_name)
 
         menubar = self.menuBar()
         font = self.font()
@@ -110,11 +119,26 @@ class MainWindow(QtWidgets.QMainWindow):
         if (not len(self.coords)):
             return
         coords = self.coords.pop(0)
+        print(self.time.toString(), hexlify(coords))
         print(self.time.toString(), unpack(PACK_CODE, coords))
-        si4713._set_rds_buffer(coords)
+        '''uncomment if on pi'''
+        # si4713._set_rds_buffer(coords)
 
+        my_memcpy(self.shared_memory, coords)
+        # self.shared_memory = coords
+        print(self.time.toString(), 's2', hexlify(self.shared_memory.buf))
 
-app = QtWidgets.QApplication(sys.argv)
-window = MainWindow()
-window.show()
-app.exec()
+def tx_qt_main_func(shared_input_buffer_name: str):
+    app = QtWidgets.QApplication(sys.argv)
+    window = MainWindow(shared_input_buffer_name)
+    window.show()
+    app.exec()
+
+if __name__ == '__main__':
+    s1 = shared_memory.SharedMemory(name='s1', create=True, size=6)
+    
+    # s1.buf = pack(PACK_CODE, 255, 255, 255, 255)
+    pack_data = pack(PACK_CODE, 255, 255, 255, 255)
+    my_memcpy(s1, pack_data)
+    print(s1.buf)
+    tx_qt_main_func(s1.name)

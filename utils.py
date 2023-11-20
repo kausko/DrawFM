@@ -1,14 +1,16 @@
 import numpy as np
 
-# https://stackoverflow.com/a/32676625
+# memcpy
+def my_memcpy(shared_memory, data):
+    for index, byte in enumerate(data):
+        # print(shared_memory.buf, index, byte)
+        shared_memory.buf[index] = byte
+
 def bitstring_to_bytes(s):
-    # print('s:', s)
-    v = int(s, 2)
-    b = bytearray()
-    while v:
-        b.append(v & 0xff)
-        v >>= 8
-    return bytes(b[::-1])
+    int_list = []
+    for i in range(0, len(s), 8):
+        int_list.append(int(s[i:i+8], 2))
+    return bytearray(int_list)
 
 def ndarray_bool_to_bytes(ndarray_bool: np.ndarray):
 
@@ -21,6 +23,7 @@ def ndarray_bool_to_bytes(ndarray_bool: np.ndarray):
         else:
             new_bytes_str += '0'
 
+    # print(new_bytes_str)
     return bitstring_to_bytes(new_bytes_str)
 
 def bytes_to_ndarray_bool(msg: bytes):
