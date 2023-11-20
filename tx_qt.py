@@ -38,7 +38,7 @@ from bitstruct import *
 # si4713.configure_rds(0xADAF, station=bytes('(1,1), (2,2), (3,3), (4,4), (5,5), (6,6), (7,7), (8,8), (9,9), (10,10)', 'utf-8'), rds_buffer=bytes('(1,1), (2,2), (3,3), (4,4), (5,5), (6,6), (7,7), (8,8), (9,9), (10,10)', 'utf-8'))
 '''RASPBERRY PI: use above'''
 
-DELAY = 30
+DELAY = 300
 # PACK_CODE = '>hhBB'
 PACK_CODE = 'u10u10u6u6'
 
