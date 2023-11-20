@@ -5,6 +5,7 @@ from multiprocessing import shared_memory
 from binascii import hexlify
 from utils import my_memcpy
 from bitstruct import *
+import time
 from os import getenv
 from dotenv import load_dotenv
 load_dotenv()
@@ -42,7 +43,7 @@ if not sim:
     si4713.configure_rds(0xADAF, station=bytes('(1,1), (2,2), (3,3), (4,4), (5,5), (6,6), (7,7), (8,8), (9,9), (10,10)', 'utf-8'), rds_buffer=bytes('(1,1), (2,2), (3,3), (4,4), (5,5), (6,6), (7,7), (8,8), (9,9), (10,10)', 'utf-8'))
     '''RASPBERRY PI: use above'''
 
-DELAY = 30
+DELAY = 300
 # PACK_CODE = '>hhBB'
 PACK_CODE = 'u10u10u6u6'
 
@@ -111,22 +112,29 @@ class MainWindow(QtWidgets.QMainWindow):
         if self.last_x is None: # First event.
             self.last_x = x
             self.last_y = y
+            self.last_draw_time = time.time()
 
             self.coords.append(pack(PACK_CODES['draw'], x, y, self.line_code, 0, 0))
             return # Ignore the first time.
 
-        canvas = self.label.pixmap()
-        painter = QtGui.QPainter(canvas)
-        painter.setPen(QtGui.QPen(self.color, self.brushSize))
-        painter.drawLine(self.last_x, self.last_y, x, y)
-        painter.end()
-        self.label.setPixmap(canvas)
+        if (x - self.last_x)**2 + (y - self.last_y)**2 > 200 or time.time() - self.last_draw_time > 0.3:
 
-        # Update the origin for next time.
-        self.last_x = x
-        self.last_y = y
+            canvas = self.label.pixmap()
+            painter = QtGui.QPainter(canvas)
+            pen = QtGui.QPen(self.color, self.brushSize)
+            pen.setCapStyle(QtCore.Qt.RoundCap)
+            # pen.setStyle(QtCore.Qt.SolidL)
+            painter.setPen(pen)
+            painter.drawLine(self.last_x, self.last_y, x, y)
+            painter.end()
+            self.label.setPixmap(canvas)
 
-        self.coords.append(pack(PACK_CODES['draw'], x, y, self.line_code, 0, 0))
+            # Update the origin for next time.
+            self.last_x = x
+            self.last_y = y
+            self.last_draw_time = time.time()
+
+            self.coords.append(pack(PACK_CODES['draw'], x, y, self.line_code, 0, 0))
 
     def _mouseReleaseEvent(self, e):
         self.last_x = None

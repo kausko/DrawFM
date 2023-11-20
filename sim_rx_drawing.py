@@ -177,6 +177,7 @@ def rx_drawing(shared_input_buffer_name: str, communications_simulator: Communic
                                 else:
                                     # pygame.draw.lines(screen, (r, g, b, a), False, [coords[-1], coords[-2]], width=brush_size)
                                     pygame.draw.line(screen, (r, g, b, a), coords[-1], coords[-2], width=brush_size)
+                                    pygame.draw.ellipse(screen, (r, g, b, a), pygame.Rect(x - brush_size // 2, y - brush_size // 2, brush_size, brush_size), brush_size)
 
                                 # pygame.draw.lines(screen, (255, 255, 255), False, coords[:-2])
                                 
