@@ -41,7 +41,7 @@ def rx_drawing(shared_input_buffer_name: str, communications_simulator: Communic
     # pygame setup
     pygame.init()
     screen = pygame.display.set_mode((1024, 1024))
-    screen.fill((0, 0, 0))
+    screen.fill((255, 255, 255))
     clock = pygame.time.Clock()
 
     # mock setup
@@ -164,7 +164,7 @@ def rx_drawing(shared_input_buffer_name: str, communications_simulator: Communic
                             brush_size = msg_brush_size
                         elif data_clean == 15:
                             # clear canvas or something
-                            screen.fill((0, 0, 0))
+                            screen.fill((255, 255, 255))
                             coords = []
                         elif True:
                             # print(coords)
