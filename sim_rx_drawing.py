@@ -18,7 +18,7 @@ PACK_CODE = 'u10u10u6u6'
 PACK_CODES = {
     'draw': 'u10u10u4u4u4',
     'color': 'u8u8u8u4u4',
-    'size': 'u10u4'
+    'size': 'u10u18u4'
 }
 
 def rx_drawing(shared_input_buffer_name: str, communications_simulator: CommunicationSimulator):
@@ -58,6 +58,7 @@ def rx_drawing(shared_input_buffer_name: str, communications_simulator: Communic
         last_data_line = 0
         r, g, b, = (0, 0, 0)
         a = 255
+        brush_size = 3
         while running:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -110,6 +111,8 @@ def rx_drawing(shared_input_buffer_name: str, communications_simulator: Communic
                         elif key == 'color':
                             (msg_r, msg_g, msg_b, msg_a, msg_type) = unpack(pack_code, rds[:4])
                             msg_a = msg_a * 16  # using 4-bit value for alpha, so scale by 2^4
+                        elif key == 'size':
+                            msg_brush_size, msg_dontcare, msg_type = unpack(pack_code, rds[:4])
                                 
 
                     # print(x, y, data_line, data_clean, time.time())
@@ -141,8 +144,9 @@ def rx_drawing(shared_input_buffer_name: str, communications_simulator: Communic
                     if rds != last_rds:
                         print(x, y, data_line, data_clean, time.time())
                         print(r, g, b, a, time.time())
-                        if msg_type != 15:
-                            # not a change color message
+                        if msg_type != 15 and msg_type != 3 and msg_type == 0:
+                            # not a change color message, not a size change message
+                            # and is a 0 for draw message
                             coords.append([x, y])
                         print('coords len:', len(coords))
                         
@@ -152,6 +156,9 @@ def rx_drawing(shared_input_buffer_name: str, communications_simulator: Communic
                             g = msg_g
                             b = msg_b
                             a = msg_a
+                        elif msg_type == 3:
+                            # change size message
+                            brush_size = msg_brush_size
                         elif data_clean == 15:
                             # clear canvas or something
                             screen.fill((0, 0, 0))
@@ -165,7 +172,9 @@ def rx_drawing(shared_input_buffer_name: str, communications_simulator: Communic
                                     coords = [coords[-1]]
                                     
                                 else:
-                                    pygame.draw.lines(screen, (r, g, b, a), False, [coords[-1], coords[-2]])
+                                    # pygame.draw.lines(screen, (r, g, b, a), False, [coords[-1], coords[-2]], width=brush_size)
+                                    pygame.draw.line(screen, (r, g, b, a), coords[-1], coords[-2], width=brush_size)
+
                                 # pygame.draw.lines(screen, (255, 255, 255), False, coords[:-2])
                                 
                                 last_data_line = data_line
