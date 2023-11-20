@@ -3,7 +3,8 @@ import random
 from comm_simulator import CommunicationSimulator
 from multiprocessing import shared_memory
 from time import sleep
-from struct import *
+# from struct import *
+from bitstruct import *
 from binascii import hexlify
 import time
 from utils import my_memcpy
@@ -11,6 +12,14 @@ from utils import my_memcpy
 '''RASPBERRY PI: use below'''
 # from si4703Library import si4703Radio
 '''RASPBERRY PI: use above'''
+
+PACK_CODE = 'u10u10u6u6'
+
+PACK_CODES = {
+    'draw': 'u10u10u4u4u4',
+    'color': 'u8u8u8u4u4',
+    'size': 'u10u18u4'
+}
 
 def rx_drawing(shared_input_buffer_name: str, communications_simulator: CommunicationSimulator):
 
@@ -25,7 +34,7 @@ def rx_drawing(shared_input_buffer_name: str, communications_simulator: Communic
 
     # pygame setup
     pygame.init()
-    screen = pygame.display.set_mode((1280, 720))
+    screen = pygame.display.set_mode((1024, 1024))
     screen.fill((0, 0, 0))
     clock = pygame.time.Clock()
 
@@ -33,7 +42,7 @@ def rx_drawing(shared_input_buffer_name: str, communications_simulator: Communic
     mock = False
     coords = []
     if mock:
-        coords = [[random.randint(0, 1280), random.randint(0, 720)]]
+        coords = [[random.randint(0, 812), random.randint(0, 720)]]
     def mock_draw():
         # draw pixel at coords
         screen.set_at(coords, (255, 255, 255))
@@ -47,6 +56,9 @@ def rx_drawing(shared_input_buffer_name: str, communications_simulator: Communic
     try:
         last_rds = None
         last_data_line = 0
+        r, g, b, = (0, 0, 0)
+        a = 255
+        brush_size = 3
         while running:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -90,7 +102,18 @@ def rx_drawing(shared_input_buffer_name: str, communications_simulator: Communic
                     # print(rds)
                     # print(bytes(rds, 'utf-8'))
                     # have to select first number of bytes we want, becuse rds reader will give us extra zero bytes at end because
-                    (x, y, data_line, data_clean) = unpack('>hhBB', rds[:6])
+                    
+                    (x, y, data_line, data_clean) = unpack(PACK_CODE, rds[:4])
+
+                    for key, pack_code in PACK_CODES.items():
+                        if key == 'draw':
+                            (x, y, data_line, data_clean, msg_type) = unpack(pack_code, rds[:4])
+                        elif key == 'color':
+                            (msg_r, msg_g, msg_b, msg_a, msg_type) = unpack(pack_code, rds[:4])
+                            msg_a = msg_a * 16  # using 4-bit value for alpha, so scale by 2^4
+                        elif key == 'size':
+                            msg_brush_size, msg_dontcare, msg_type = unpack(pack_code, rds[:4])
+                                
 
                     # print(x, y, data_line, data_clean, time.time())
 
@@ -120,24 +143,38 @@ def rx_drawing(shared_input_buffer_name: str, communications_simulator: Communic
 
                     if rds != last_rds:
                         print(x, y, data_line, data_clean, time.time())
-                        coords.append([x, y])
+                        print(r, g, b, a, time.time())
+                        if msg_type != 15 and msg_type != 3 and msg_type == 0:
+                            # not a change color message, not a size change message
+                            # and is a 0 for draw message
+                            coords.append([x, y])
                         print('coords len:', len(coords))
                         
-                        
-                        if data_clean == 255:
+                        if msg_type == 15:
+                            # change color message
+                            r = msg_r
+                            g = msg_g
+                            b = msg_b
+                            a = msg_a
+                        elif msg_type == 3:
+                            # change size message
+                            brush_size = msg_brush_size
+                        elif data_clean == 15:
                             # clear canvas or something
                             screen.fill((0, 0, 0))
                             coords = []
                         elif True:
                             # print(coords)
-                            if data_line == 255 or data_line == 0:
+                            if data_line == 15 or data_line == 0:
                                 # print('data_line', data_line, 'last_data_line', last_data_line)
                                 if data_line != last_data_line:
                                     # pygame.draw.lines(screen, (255, 255, 255), False, coords[:-1])
                                     coords = [coords[-1]]
                                     
                                 else:
-                                    pygame.draw.lines(screen, (255, 255, 255), False, [coords[-1], coords[-2]])
+                                    # pygame.draw.lines(screen, (r, g, b, a), False, [coords[-1], coords[-2]], width=brush_size)
+                                    pygame.draw.line(screen, (r, g, b, a), coords[-1], coords[-2], width=brush_size)
+
                                 # pygame.draw.lines(screen, (255, 255, 255), False, coords[:-2])
                                 
                                 last_data_line = data_line
@@ -170,10 +207,8 @@ def rx_drawing(shared_input_buffer_name: str, communications_simulator: Communic
     pygame.quit()
 
 if __name__ == "__main__":
-    PACK_CODE = '>hhBB'
-
     s1 = shared_memory.SharedMemory(name='s1', create=True, size=6)
-    pack_data = pack(PACK_CODE, 255, 255, 255, 0)
+    pack_data = pack(PACK_CODES['draw'], 255, 255, 63, 0)
     my_memcpy(s1, pack_data)
     communication_simulator = CommunicationSimulator(drop_rate=0.01, bitflip_rate=0.01)
     rx_drawing(shared_input_buffer_name=s1.name, communications_simulator=communication_simulator)

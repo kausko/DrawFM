@@ -1,10 +1,11 @@
 import sys
-from PyQt5 import QtGui, QtWidgets
+from PyQt5 import QtGui, QtWidgets, QtCore
 from PyQt5.QtCore import Qt, QTime, QTimer
-from struct import *
+# from struct import *
 from multiprocessing import shared_memory
 from binascii import hexlify
 from utils import my_memcpy
+from bitstruct import *
 
 sim = False
 
@@ -40,8 +41,15 @@ if not sim:
     si4713.configure_rds(0xADAF, station=bytes('(1,1), (2,2), (3,3), (4,4), (5,5), (6,6), (7,7), (8,8), (9,9), (10,10)', 'utf-8'), rds_buffer=bytes('(1,1), (2,2), (3,3), (4,4), (5,5), (6,6), (7,7), (8,8), (9,9), (10,10)', 'utf-8'))
     '''RASPBERRY PI: use above'''
 
-DELAY = 300
-PACK_CODE = '>hhBB'
+DELAY = 30
+# PACK_CODE = '>hhBB'
+PACK_CODE = 'u10u10u6u6'
+
+PACK_CODES = {
+    'draw': 'u10u10u4u4u4',
+    'color': 'u8u8u8u4u4',
+    'size': 'u10u18u4'
+}
 
 class MainWindow(QtWidgets.QMainWindow):
 
@@ -51,12 +59,23 @@ class MainWindow(QtWidgets.QMainWindow):
         self.shared_input_buffer_name = shared_input_buffer_name
         self.shared_memory = shared_memory.SharedMemory(name=self.shared_input_buffer_name)
 
-        menubar = self.menuBar()
+        menubar = self.addToolBar("toolbar")
+        # menubar = self.menuBar()
         font = self.font()
         font.setPointSize(16)
         menubar.setFont(font)
         menubar.addAction("Clear").triggered.connect(self.clearEvent)
         menubar.addAction("Color").triggered.connect(self.colorChangeEvent)
+
+        self.brushSize = 3
+
+        self.mySlider = QtWidgets.QSlider(QtCore.Qt.Orientation.Horizontal, self)
+        self.mySlider.setRange(1, 1023)
+        self.mySlider.sliderReleased.connect(self.brushSizeChangeEvent)
+
+        menubar = self.addToolBar("toolbar")
+        menubar.addWidget(self.mySlider)
+        # menubar.addAction("Brush Size").triggered.connect(self.brushSizeChangeEvent)
 
         self.label = QtWidgets.QLabel()
         canvas = QtGui.QPixmap(800, 600)
@@ -68,12 +87,22 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.last_x, self.last_y, self.line_code = None, None, 0
         self.color = Qt.black
+        self.color = QtWidgets.QColorDialog.getColor()
         self.coords = []
+
+        # send initial color message
+        self.coords.append(self._getColorMessage())
 
         self.time = QTime(0, 0, 0, 0)
         timer = QTimer(self)
         timer.timeout.connect(self.send_coords)
         timer.start(DELAY)
+    
+    def _getColorMessage(self):
+        (r, g, b, a) = self.color.getRgb()
+        a = a // 16
+        print('COLOR', r, g, b, a)
+        return pack(PACK_CODES['color'], r, g, b, a, 15)
 
     def _mouseMoveEvent(self, e):
         x = int(e.localPos().x())
@@ -83,12 +112,12 @@ class MainWindow(QtWidgets.QMainWindow):
             self.last_x = x
             self.last_y = y
 
-            self.coords.append(pack(PACK_CODE, x, y, self.line_code, 0))
+            self.coords.append(pack(PACK_CODES['draw'], x, y, self.line_code, 0, 0))
             return # Ignore the first time.
 
         canvas = self.label.pixmap()
         painter = QtGui.QPainter(canvas)
-        painter.setPen(QtGui.QPen(self.color))
+        painter.setPen(QtGui.QPen(self.color, self.brushSize))
         painter.drawLine(self.last_x, self.last_y, x, y)
         painter.end()
         self.label.setPixmap(canvas)
@@ -97,22 +126,30 @@ class MainWindow(QtWidgets.QMainWindow):
         self.last_x = x
         self.last_y = y
 
-        self.coords.append(pack(PACK_CODE, x, y, self.line_code, 0))
+        self.coords.append(pack(PACK_CODES['draw'], x, y, self.line_code, 0, 0))
 
     def _mouseReleaseEvent(self, e):
         self.last_x = None
         self.last_y = None
-        self.line_code = 0 if self.line_code == 255 else 255
+        self.line_code = 0 if self.line_code == 15 else 15
     
     def colorChangeEvent(self):
         self.color = QtWidgets.QColorDialog.getColor()
+        self.coords.append(self._getColorMessage())
+    
+    def brushSizeChangeEvent(self):
+        sliderPosition = self.mySlider.sliderPosition()
+        self.brushSize = sliderPosition
+        
+        entry = pack(PACK_CODES['size'], self.brushSize, 0, 3)
+        self.coords.append(entry)
 
     def clearEvent(self):
         canvas = self.label.pixmap()
         canvas.fill(Qt.white)
         self.label.setPixmap(canvas)
         # self.coords.append(bytes("clear", 'utf-8'))
-        self.coords.append(pack(PACK_CODE, 0, 0, self.line_code, 255))
+        self.coords.append(pack(PACK_CODES['draw'], 0, 0, self.line_code, 15, 0))
 
     def send_coords(self):
         self.time = self.time.addMSecs(DELAY)
@@ -141,7 +178,8 @@ def tx_qt_main_func(shared_input_buffer_name: str):
 if __name__ == '__main__':
     # it should be OK to leave this uncommented, even on Pi
     s1 = shared_memory.SharedMemory(name='s1', create=True, size=6)
-    pack_data = pack(PACK_CODE, 255, 255, 255, 255)
+    pack_data = pack(PACK_CODES['draw'], 255, 255, 15, 15, 0, 0)
     my_memcpy(s1, pack_data)
     print(s1.buf)
+    # main function
     tx_qt_main_func(s1.name)
