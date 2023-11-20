@@ -249,7 +249,82 @@ class si4703Radio():
                             # msg += chars
                             mi += 1
 
+    def si4703getRDSBytes(self):        
+        z = "000000000000000"
+        msg = {}
+        mi = 0
+        h2 = ""
+        h3 = ""
+        h4 = ""
+        wc = 0
+        RDSB = self.SI4703_RDSB
+        RDSC = self.SI4703_RDSC
+        RDSD = self.SI4703_RDSD
+        reset = False
+        while 1:
+            if reset:
+                msg = {}
+                mi = 0
+                h2 = ""
+                h3 = ""
+                h4 = ""
+                wc = 0
+                reset = False
 
+            self.si4703ReadRegisters()
+            reg = self.si4703_registers
+            if reg[self.SI4703_STATUSRSSI] & (1 << 15):
+                r2 = z[:16 - len(bin(reg[RDSB])[2:])] + bin(reg[RDSB])[2:]
+                r3 = z[:16 - len(bin(reg[RDSC])[2:])] + bin(reg[RDSC])[2:]
+                r4 = z[:16 - len(bin(reg[RDSD])[2:])] + bin(reg[RDSD])[2:]
+                if h2 != r2 or h3 != r3 or h4 != r4:
+                    wc += 1
+                    h2 = r2
+                    h3 = r3
+                    h4 = r4
+                    value = int(r2[:4],2)
+                    value2 = int(r2[5:-5],2)
+                    if value2 == 0:
+                        type = "A"
+                    else:
+                        type = "B"
+                    code =  str(value) + type
+                    # print("Code", code)
+                    if code == "2B" or code == "2A":
+                        # chars = [bitstring_to_bytes(r3[:8]), bitstring_to_bytes(r3[9:]), bitstring_to_bytes(r4[:8]), bitstring_to_bytes(r4[9:])]
+                        # chars = [int(r3[:8], 2), int(r3[9:], 2), int(r4[:8], 2), int(r4[9:], 2)]
+
+                        string_chars = [r3[:8], r3[8:], r4[:8], r4[8:]]
+                        print('r3', r3, 'r4', r4)
+                        print('string_chars:', string_chars)
+
+                        chars = []
+                        for c in string_chars:
+                            chars.append(int(c, 2))
+
+                        index = int(r2[12:],2)
+                        print(index, chars)
+                        # print(str(index) + '-' +  str(chars))
+                        
+                        if index == 0 and mi != 0:
+                            # return ''.join(dict(sorted(msg.items())).values())
+                            dict_values = dict(sorted(msg.items())).values()
+                            # print('dict_values:', dict_values)
+                            byte_list = []
+                            for msg in dict_values:
+                                for entry in msg:
+                                    byte_list.append(entry)
+                            print('byte_list:', byte_list)
+                            return bytearray(byte_list)
+                            # print()
+                            # print("RDS MSG = " + ''.join(dict(sorted(msg.items())).values()))
+                            # print()
+                            # reset = True
+                            # break
+                        msg[index] = chars
+                        if index == mi:
+                            # msg += chars
+                            mi += 1
 
     def si4703ProcessRDS(self):    
         self.si4703ReadRegisters()

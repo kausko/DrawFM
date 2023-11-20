@@ -1,13 +1,14 @@
 import sys
 from PyQt5 import QtGui, QtWidgets, QtCore
 from PyQt5.QtCore import Qt, QTime, QTimer
-# from struct import *
 from multiprocessing import shared_memory
 from binascii import hexlify
 from utils import my_memcpy
 from bitstruct import *
-
-sim = False
+from os import getenv
+from dotenv import load_dotenv
+load_dotenv()
+sim = getenv("SIM") == "True"
 
 if not sim:
     '''RASPBERRY PI: use below'''
@@ -86,8 +87,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.setCentralWidget(self.label)
 
         self.last_x, self.last_y, self.line_code = None, None, 0
-        self.color = Qt.black
-        self.color = QtWidgets.QColorDialog.getColor()
+        self.color = QtGui.QColor(Qt.black)
         self.coords = []
 
         # send initial color message
