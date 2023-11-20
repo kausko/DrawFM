@@ -117,11 +117,14 @@ class MainWindow(QtWidgets.QMainWindow):
             self.coords.append(pack(PACK_CODES['draw'], x, y, self.line_code, 0, 0))
             return # Ignore the first time.
 
-        if (x - self.last_x)**2 + (y - self.last_y)**2 > 100 or time.time() - self.last_draw_time > 0.1:
+        if (x - self.last_x)**2 + (y - self.last_y)**2 > 200 or time.time() - self.last_draw_time > 0.3:
 
             canvas = self.label.pixmap()
             painter = QtGui.QPainter(canvas)
-            painter.setPen(QtGui.QPen(self.color, self.brushSize))
+            pen = QtGui.QPen(self.color, self.brushSize)
+            pen.setCapStyle(QtCore.Qt.RoundCap)
+            # pen.setStyle(QtCore.Qt.SolidL)
+            painter.setPen(pen)
             painter.drawLine(self.last_x, self.last_y, x, y)
             painter.end()
             self.label.setPixmap(canvas)
