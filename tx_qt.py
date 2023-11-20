@@ -1,14 +1,15 @@
 import sys
 from PyQt5 import QtGui, QtWidgets, QtCore
 from PyQt5.QtCore import Qt, QTime, QTimer
-# from struct import *
 from multiprocessing import shared_memory
 from binascii import hexlify
 from utils import my_memcpy
 from bitstruct import *
 import time
-
-sim = True
+from os import getenv
+from dotenv import load_dotenv
+load_dotenv()
+sim = getenv("SIM") == "True"
 
 if not sim:
     '''RASPBERRY PI: use below'''
@@ -47,9 +48,9 @@ DELAY = 300
 PACK_CODE = 'u10u10u6u6'
 
 PACK_CODES = {
-    'draw': 'u10u10u4u4u4',
-    'color': 'u8u8u8u4u4',
-    'size': 'u10u18u4'
+    'draw': 'u10u10u4u4u4', # x, y, draw_line, draw_clear, msg_type
+    'color': 'u8u8u8u4u4',  # r, g, b, a (scaled 0-16), msg_type
+    'size': 'u10u18u4'  # size (0-1023), unused, msg_type
 }
 
 class MainWindow(QtWidgets.QMainWindow):
@@ -87,8 +88,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.setCentralWidget(self.label)
 
         self.last_x, self.last_y, self.line_code = None, None, 0
-        self.color = Qt.black
-        self.color = QtWidgets.QColorDialog.getColor()
+        self.color = QtGui.QColor(Qt.black)
         self.coords = []
 
         # send initial color message
@@ -142,7 +142,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.line_code = 0 if self.line_code == 15 else 15
     
     def colorChangeEvent(self):
-        self.color = QtWidgets.QColorDialog.getColor()
+        self.color = QtWidgets.QColorDialog.getColor(options=QtWidgets.QColorDialog.ShowAlphaChannel)
         self.coords.append(self._getColorMessage())
     
     def brushSizeChangeEvent(self):
@@ -186,7 +186,7 @@ def tx_qt_main_func(shared_input_buffer_name: str):
 if __name__ == '__main__':
     # it should be OK to leave this uncommented, even on Pi
     s1 = shared_memory.SharedMemory(name='s1', create=True, size=6)
-    pack_data = pack(PACK_CODES['draw'], 255, 255, 15, 15, 0, 0)
+    pack_data = pack(PACK_CODES['draw'], 255, 255, 15, 15, 0)
     my_memcpy(s1, pack_data)
     print(s1.buf)
     # main function

@@ -8,34 +8,40 @@ from bitstruct import *
 from binascii import hexlify
 import time
 from utils import my_memcpy
+from os import getenv
+from dotenv import load_dotenv
+load_dotenv()
+sim = getenv("SIM") == "True"
 
-'''RASPBERRY PI: use below'''
-# from si4703Library import si4703Radio
-'''RASPBERRY PI: use above'''
+if not sim:
+    '''RASPBERRY PI: use below'''
+    from si4703Library import si4703Radio
+    '''RASPBERRY PI: use above'''
 
 PACK_CODE = 'u10u10u6u6'
 
 PACK_CODES = {
-    'draw': 'u10u10u4u4u4',
-    'color': 'u8u8u8u4u4',
-    'size': 'u10u18u4'
+    'draw': 'u10u10u4u4u4', # x, y, draw_line, draw_clear, msg_type
+    'color': 'u8u8u8u4u4',  # r, g, b, a (scaled 0-16), msg_type
+    'size': 'u10u18u4'  # size (0-1023), unused, msg_type
 }
 
 def rx_drawing(shared_input_buffer_name: str, communications_simulator: CommunicationSimulator):
-
-    '''RASPBERRY PI: use below'''
-    # radio = si4703Radio(0x10, 5, 19)
-    # radio.si4703Init()
-    # radio.si4703SetChannel(877)
-    # radio.si4703SetVolume(5)
-    # print(str(radio.si4703GetChannel()))
-    # print(str(radio.si4703GetVolume()))
-    '''RASPBERRY PI: use above'''
+    
+    if not sim:
+        '''RASPBERRY PI: use below'''
+        radio = si4703Radio(0x10, 5, 19)
+        radio.si4703Init()
+        radio.si4703SetChannel(877)
+        radio.si4703SetVolume(5)
+        print(str(radio.si4703GetChannel()))
+        print(str(radio.si4703GetVolume()))
+        '''RASPBERRY PI: use above'''
 
     # pygame setup
     pygame.init()
     screen = pygame.display.set_mode((1024, 1024))
-    screen.fill((0, 0, 0))
+    screen.fill((255, 255, 255))
     clock = pygame.time.Clock()
 
     # mock setup
@@ -67,25 +73,22 @@ def rx_drawing(shared_input_buffer_name: str, communications_simulator: Communic
             if mock:
                 mock_draw()
             else:
-
-                
-                
                 try:
-                    '''RASPBERRY PI: use below'''
-                    # # if the below function isn't implemented, you need to add it to the si4703 library
-                    # # I've included the function commented out at the bottom of this file.
-                    # # Just copy and paste it to the same file where the radio.si4703getRDS() function is
-                    # rds = radio.si4703getRDSBytes()
-                    '''RASPBERRY PI: use above'''
-
-
-                    '''SIMULATOR: use below'''
-                    '''NOTE: you need to comment this out when running on hardware, as it overwrites the rds variable'''
-                    s2 = shared_memory.SharedMemory(name=shared_input_buffer_name)
-                    tx_buffer = s2.buf
-                    communications_simulator.set_buffer(tx_buffer)
-                    rds = communications_simulator.get_buffer()
-                    '''SIMULATOR: use above'''
+                    if not sim:
+                        '''RASPBERRY PI: use below'''
+                        # if the below function isn't implemented, you need to add it to the si4703 library
+                        # I've included the function commented out at the bottom of this file.
+                        # Just copy and paste it to the same file where the radio.si4703getRDS() function is
+                        rds = radio.si4703getRDSBytes()
+                        '''RASPBERRY PI: use above'''
+                    else:
+                        '''SIMULATOR: use below'''
+                        '''NOTE: you need to comment this out when running on hardware, as it overwrites the rds variable'''
+                        s2 = shared_memory.SharedMemory(name=shared_input_buffer_name)
+                        tx_buffer = s2.buf
+                        communications_simulator.set_buffer(tx_buffer)
+                        rds = communications_simulator.get_buffer()
+                        '''SIMULATOR: use above'''
 
 
                     # print('rds:', hexlify(rds))
@@ -161,7 +164,7 @@ def rx_drawing(shared_input_buffer_name: str, communications_simulator: Communic
                             brush_size = msg_brush_size
                         elif data_clean == 15:
                             # clear canvas or something
-                            screen.fill((0, 0, 0))
+                            screen.fill((255, 255, 255))
                             coords = []
                         elif True:
                             # print(coords)
@@ -209,7 +212,7 @@ def rx_drawing(shared_input_buffer_name: str, communications_simulator: Communic
 
 if __name__ == "__main__":
     s1 = shared_memory.SharedMemory(name='s1', create=True, size=6)
-    pack_data = pack(PACK_CODES['draw'], 255, 255, 63, 0)
+    pack_data = pack(PACK_CODES['draw'], 255, 255, 15, 15, 0)
     my_memcpy(s1, pack_data)
     communication_simulator = CommunicationSimulator(drop_rate=0.01, bitflip_rate=0.01)
     rx_drawing(shared_input_buffer_name=s1.name, communications_simulator=communication_simulator)
