@@ -47,9 +47,9 @@ DELAY = 30
 PACK_CODE = 'u10u10u6u6'
 
 PACK_CODES = {
-    'draw': 'u10u10u4u4u4',
-    'color': 'u8u8u8u4u4',
-    'size': 'u10u18u4'
+    'draw': 'u10u10u4u4u4', # x, y, draw_line, draw_clear, msg_type
+    'color': 'u8u8u8u4u4',  # r, g, b, a (scaled 0-16), msg_type
+    'size': 'u10u18u4'  # size (0-1023), unused, msg_type
 }
 
 class MainWindow(QtWidgets.QMainWindow):
@@ -178,7 +178,7 @@ def tx_qt_main_func(shared_input_buffer_name: str):
 if __name__ == '__main__':
     # it should be OK to leave this uncommented, even on Pi
     s1 = shared_memory.SharedMemory(name='s1', create=True, size=6)
-    pack_data = pack(PACK_CODES['draw'], 255, 255, 15, 15, 0, 0)
+    pack_data = pack(PACK_CODES['draw'], 255, 255, 15, 15, 0)
     my_memcpy(s1, pack_data)
     print(s1.buf)
     # main function
