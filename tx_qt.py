@@ -43,7 +43,7 @@ if not sim:
     si4713.configure_rds(0xADAF, station=bytes('(1,1), (2,2), (3,3), (4,4), (5,5), (6,6), (7,7), (8,8), (9,9), (10,10)', 'utf-8'), rds_buffer=bytes('(1,1), (2,2), (3,3), (4,4), (5,5), (6,6), (7,7), (8,8), (9,9), (10,10)', 'utf-8'))
     '''RASPBERRY PI: use above'''
 
-DELAY = 300
+DELAY = 50
 # PACK_CODE = '>hhBB'
 PACK_CODE = 'u4u28'
 
@@ -68,7 +68,7 @@ def pack_draw(x: int, y: int, draw_line: int):
     return pack(PACK_CODES['draw'], MSG_CODES['draw'], x, y, draw_line, 0)
 
 def pack_color(r: int, g: int, b: int, a: int):
-    return pack(PACK_CODES['color'], MSG_CODES['color'], r, g, b, a//16)
+    return pack(PACK_CODES['color'], MSG_CODES['color'], r, g, b, a)
 
 def pack_size(size: int):
     return pack(PACK_CODES['size'], MSG_CODES['size'], size, 0)

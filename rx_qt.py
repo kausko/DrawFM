@@ -123,7 +123,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
             elif msg == MSG_CODES['color']:
                 _, r, g, b, a = unpack(PACK_CODES['color'], rds[:4])
-                self.color = QtGui.QColor(r, g, b)
+                self.color = QtGui.QColor(r, g, b, a*16)
 
             elif msg == MSG_CODES['size']:
                 _, size, __ = unpack(PACK_CODES['size'], rds[:4])
