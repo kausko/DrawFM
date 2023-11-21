@@ -6,7 +6,7 @@ from multiprocessing import shared_memory
 from binascii import hexlify
 from PyQt5.QtWidgets import QWidget
 from comm_simulator import CommunicationSimulator
-from utils import my_memcpy
+from utils import DEFAULT_BG_COLOR, DEFAULT_BRUSH_SIZE, DEFAULT_PEN_COLOR, my_memcpy, PACK_CODE, PACK_CODES, MSG_CODES, pack_draw
 from bitstruct import *
 from os import getenv
 from dotenv import load_dotenv
@@ -21,28 +21,6 @@ if not sim:
 
 TICK = 40
 
-PACK_CODE = 'u4u28'
-
-PACK_CODES = {
-    # 'draw': 'u10u10u4u4u4', # x, y, draw_line, draw_clear, msg_type
-    # 'color': 'u8u8u8u4u4',  # r, g, b, a (scaled 0-16), msg_type
-    # 'size': 'u10u18u4'  # size (0-1023), unused, msg_type
-    'draw': 'u4u10u10u4u4', # msg_type, x, y, draw_line, unused
-    'color': 'u4u8u8u8u4', # msg_type, r, g, b, a
-    'size': 'u4u10u18', # msg_type, size (0-1023), unused
-    'clear': 'u4u28' # msg_type, unused
-}
-
-MSG_CODES = {
-    'draw': 0,
-    'color': 15,
-    'size': 3,
-    'clear': 9
-}
-
-def pack_draw(x: int, y: int, draw_line: int):
-    return pack(PACK_CODES['draw'], MSG_CODES['draw'], x, y, draw_line, 0)
-
 class MainWindow(QtWidgets.QMainWindow):
 
     def __init__(self, shared_input_buffer_name: str, communications_simulator: CommunicationSimulator):
@@ -54,13 +32,13 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.label = QtWidgets.QLabel()
         canvas = QtGui.QPixmap(800, 600)
-        canvas.fill(Qt.white)
+        canvas.fill(DEFAULT_BG_COLOR)
         self.label.setPixmap(canvas)
         self.setCentralWidget(self.label)
 
         self.last_x, self.last_y, self.last_rds, self.line_code = None, None, None, 0
-        self.color = QtGui.QColor(Qt.black)
-        self.brushSize = 3
+        self.color = QtGui.QColor(DEFAULT_PEN_COLOR)
+        self.brushSize = DEFAULT_BRUSH_SIZE
 
         if not sim:
             '''RASPBERRY PI: use below'''

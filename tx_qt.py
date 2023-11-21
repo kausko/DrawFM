@@ -3,7 +3,7 @@ from PyQt5 import QtGui, QtWidgets, QtCore
 from PyQt5.QtCore import Qt, QTime, QTimer
 from multiprocessing import shared_memory
 from binascii import hexlify
-from utils import my_memcpy
+from utils import DEFAULT_BG_COLOR, DEFAULT_BRUSH_SIZE, DEFAULT_PEN_COLOR, my_memcpy, pack_draw, pack_color, pack_size, pack_clear
 from bitstruct import *
 import time
 from os import getenv
@@ -44,37 +44,14 @@ if not sim:
     '''RASPBERRY PI: use above'''
 
 DELAY = 50
-# PACK_CODE = '>hhBB'
-PACK_CODE = 'u4u28'
 
-PACK_CODES = {
-    # 'draw': 'u10u10u4u4u4', # x, y, draw_line, draw_clear, msg_type
-    # 'color': 'u8u8u8u4u4',  # r, g, b, a (scaled 0-16), msg_type
-    # 'size': 'u10u18u4'  # size (0-1023), unused, msg_type
-    'draw': 'u4u10u10u4u4', # msg_type, x, y, draw_line, unused
-    'color': 'u4u8u8u8u4', # msg_type, r, g, b, a
-    'size': 'u4u10u18', # msg_type, size (0-1023), unused
-    'clear': 'u4u28' # msg_type, unused
-}
-
-MSG_CODES = {
-    'draw': 0,
-    'color': 15,
-    'size': 3,
-    'clear': 9
-}
-
-def pack_draw(x: int, y: int, draw_line: int):
-    return pack(PACK_CODES['draw'], MSG_CODES['draw'], x, y, draw_line, 0)
-
-def pack_color(r: int, g: int, b: int, a: int):
-    return pack(PACK_CODES['color'], MSG_CODES['color'], r, g, b, a)
-
-def pack_size(size: int):
-    return pack(PACK_CODES['size'], MSG_CODES['size'], size, 0)
-
-def pack_clear():
-    return pack(PACK_CODES['clear'], MSG_CODES['clear'], 0)
+class SliderProxyStyle(QtWidgets.QProxyStyle):
+    def pixelMetric(self, metric, option, widget):
+        if metric == QtWidgets.QStyle.PM_SliderThickness:
+            return 40
+        elif metric == QtWidgets.QStyle.PM_SliderLength:
+            return 40
+        return super().pixelMetric(metric, option, widget)
 
 class MainWindow(QtWidgets.QMainWindow):
 
@@ -91,10 +68,11 @@ class MainWindow(QtWidgets.QMainWindow):
         menubar.addAction("Clear").triggered.connect(self.clearEvent)
         menubar.addAction("Color").triggered.connect(self.colorChangeEvent)
 
-        self.brushSize = 3
+        self.brushSize = DEFAULT_BRUSH_SIZE
 
         self.mySlider = QtWidgets.QSlider(QtCore.Qt.Orientation.Horizontal, self)
         self.mySlider.setRange(1, 1023)
+        self.mySlider.setStyle(SliderProxyStyle(self.mySlider.style()))
         self.mySlider.sliderReleased.connect(self.brushSizeChangeEvent)
 
         menubar = self.addToolBar("toolbar")
@@ -102,14 +80,14 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.label = QtWidgets.QLabel()
         canvas = QtGui.QPixmap(800, 600)
-        canvas.fill(Qt.white)
+        canvas.fill(DEFAULT_BG_COLOR)
         self.label.setPixmap(canvas)
         self.label.mouseMoveEvent = self._mouseMoveEvent
         self.label.mouseReleaseEvent = self._mouseReleaseEvent
         self.setCentralWidget(self.label)
 
         self.last_x, self.last_y, self.line_code = None, None, 0
-        self.color = QtGui.QColor(Qt.black)
+        self.color = QtGui.QColor(DEFAULT_PEN_COLOR)
         self.coords = []
 
         # send initial color message
