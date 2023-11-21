@@ -295,15 +295,15 @@ class si4703Radio():
                         # chars = [int(r3[:8], 2), int(r3[9:], 2), int(r4[:8], 2), int(r4[9:], 2)]
 
                         string_chars = [r3[:8], r3[8:], r4[:8], r4[8:]]
-                        print('r3', r3, 'r4', r4)
-                        print('string_chars:', string_chars)
+                        # print('r3', r3, 'r4', r4)
+                        # print('string_chars:', string_chars)
 
                         chars = []
                         for c in string_chars:
                             chars.append(int(c, 2))
 
                         index = int(r2[12:],2)
-                        print(index, chars)
+                        # print(index, chars)
                         # print(str(index) + '-' +  str(chars))
                         
                         if index == 0 and mi != 0:
@@ -314,7 +314,7 @@ class si4703Radio():
                             for msg in dict_values:
                                 for entry in msg:
                                     byte_list.append(entry)
-                            print('byte_list:', byte_list)
+                            # print('byte_list:', byte_list)
                             return bytearray(byte_list)
                             # print()
                             # print("RDS MSG = " + ''.join(dict(sorted(msg.items())).values()))

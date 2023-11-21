@@ -17,7 +17,7 @@ if not sim:
     import digitalio
     import adafruit_si4713
 
-    FREQUENCY_KHZ = 87700
+    FREQUENCY_KHZ = int(getenv("FREQ") + "00")
     i2c = board.I2C()
     si_reset = digitalio.DigitalInOut(board.D5)
 
@@ -45,13 +45,36 @@ if not sim:
 
 DELAY = 300
 # PACK_CODE = '>hhBB'
-PACK_CODE = 'u10u10u6u6'
+PACK_CODE = 'u4u28'
 
 PACK_CODES = {
-    'draw': 'u10u10u4u4u4', # x, y, draw_line, draw_clear, msg_type
-    'color': 'u8u8u8u4u4',  # r, g, b, a (scaled 0-16), msg_type
-    'size': 'u10u18u4'  # size (0-1023), unused, msg_type
+    # 'draw': 'u10u10u4u4u4', # x, y, draw_line, draw_clear, msg_type
+    # 'color': 'u8u8u8u4u4',  # r, g, b, a (scaled 0-16), msg_type
+    # 'size': 'u10u18u4'  # size (0-1023), unused, msg_type
+    'draw': 'u4u10u10u4u4', # msg_type, x, y, draw_line, unused
+    'color': 'u4u8u8u8u4', # msg_type, r, g, b, a
+    'size': 'u4u10u18', # msg_type, size (0-1023), unused
+    'clear': 'u4u28' # msg_type, unused
 }
+
+MSG_CODES = {
+    'draw': 0,
+    'color': 15,
+    'size': 3,
+    'clear': 9
+}
+
+def pack_draw(x: int, y: int, draw_line: int):
+    return pack(PACK_CODES['draw'], MSG_CODES['draw'], x, y, draw_line, 0)
+
+def pack_color(r: int, g: int, b: int, a: int):
+    return pack(PACK_CODES['color'], MSG_CODES['color'], r, g, b, a//16)
+
+def pack_size(size: int):
+    return pack(PACK_CODES['size'], MSG_CODES['size'], size, 0)
+
+def pack_clear():
+    return pack(PACK_CODES['clear'], MSG_CODES['clear'], 0)
 
 class MainWindow(QtWidgets.QMainWindow):
 
@@ -62,7 +85,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self.shared_memory = shared_memory.SharedMemory(name=self.shared_input_buffer_name)
 
         menubar = self.addToolBar("toolbar")
-        # menubar = self.menuBar()
         font = self.font()
         font.setPointSize(16)
         menubar.setFont(font)
@@ -77,7 +99,6 @@ class MainWindow(QtWidgets.QMainWindow):
 
         menubar = self.addToolBar("toolbar")
         menubar.addWidget(self.mySlider)
-        # menubar.addAction("Brush Size").triggered.connect(self.brushSizeChangeEvent)
 
         self.label = QtWidgets.QLabel()
         canvas = QtGui.QPixmap(800, 600)
@@ -103,7 +124,7 @@ class MainWindow(QtWidgets.QMainWindow):
         (r, g, b, a) = self.color.getRgb()
         a = a // 16
         print('COLOR', r, g, b, a)
-        return pack(PACK_CODES['color'], r, g, b, a, 15)
+        return pack_color(r, g, b, a)
 
     def _mouseMoveEvent(self, e):
         x = int(e.localPos().x())
@@ -112,29 +133,28 @@ class MainWindow(QtWidgets.QMainWindow):
         if self.last_x is None: # First event.
             self.last_x = x
             self.last_y = y
-            self.last_draw_time = time.time()
+            # self.last_draw_time = time.time()
 
-            self.coords.append(pack(PACK_CODES['draw'], x, y, self.line_code, 0, 0))
+            self.coords.append(pack_draw(x, y, self.line_code))
             return # Ignore the first time.
 
-        if (x - self.last_x)**2 + (y - self.last_y)**2 > 200 or time.time() - self.last_draw_time > 0.3:
+        # if (x - self.last_x)**2 + (y - self.last_y)**2 > 200 or time.time() - self.last_draw_time > 0.3:
 
-            canvas = self.label.pixmap()
-            painter = QtGui.QPainter(canvas)
-            pen = QtGui.QPen(self.color, self.brushSize)
-            pen.setCapStyle(QtCore.Qt.RoundCap)
-            # pen.setStyle(QtCore.Qt.SolidL)
-            painter.setPen(pen)
-            painter.drawLine(self.last_x, self.last_y, x, y)
-            painter.end()
-            self.label.setPixmap(canvas)
+        canvas = self.label.pixmap()
+        painter = QtGui.QPainter(canvas)
+        pen = QtGui.QPen(self.color, self.brushSize)
+        pen.setCapStyle(QtCore.Qt.RoundCap)
+        painter.setPen(pen)
+        painter.drawLine(self.last_x, self.last_y, x, y)
+        painter.end()
+        self.label.setPixmap(canvas)
 
-            # Update the origin for next time.
-            self.last_x = x
-            self.last_y = y
-            self.last_draw_time = time.time()
+        # Update the origin for next time.
+        self.last_x = x
+        self.last_y = y
+        # self.last_draw_time = time.time()
 
-            self.coords.append(pack(PACK_CODES['draw'], x, y, self.line_code, 0, 0))
+        self.coords.append(pack_draw(x, y, self.line_code))
 
     def _mouseReleaseEvent(self, e):
         self.last_x = None
@@ -148,16 +168,17 @@ class MainWindow(QtWidgets.QMainWindow):
     def brushSizeChangeEvent(self):
         sliderPosition = self.mySlider.sliderPosition()
         self.brushSize = sliderPosition
-        
-        entry = pack(PACK_CODES['size'], self.brushSize, 0, 3)
-        self.coords.append(entry)
+        entry = pack_size(self.brushSize)
+        for i in range(3):
+            self.coords.append(entry)
 
     def clearEvent(self):
         canvas = self.label.pixmap()
         canvas.fill(Qt.white)
         self.label.setPixmap(canvas)
-        # self.coords.append(bytes("clear", 'utf-8'))
-        self.coords.append(pack(PACK_CODES['draw'], 0, 0, self.line_code, 15, 0))
+        clear_msg = pack_clear()
+        for i in range(3):
+            self.coords.append(clear_msg)
 
     def send_coords(self):
         self.time = self.time.addMSecs(DELAY)
@@ -175,7 +196,15 @@ class MainWindow(QtWidgets.QMainWindow):
         my_memcpy(self.shared_memory, coords)
         '''SIMULATOR: use above'''
         
-        print(self.time.toString(), 's2', hexlify(coords))
+        print({
+            'time': self.time.toString("hh:mm:ss.zzz"),
+            # 'msg': msg,
+            'last_x': self.last_x,
+            'last_y': self.last_y,
+            'line_code': self.line_code,
+            'color': str(self.color.red()) + "," + str(self.color.green()) + "," + str(self.color.blue()) + "," + str(self.color.alpha()),
+            'brushSize': self.brushSize
+        })
 
 def tx_qt_main_func(shared_input_buffer_name: str):
     app = QtWidgets.QApplication(sys.argv)
@@ -186,7 +215,7 @@ def tx_qt_main_func(shared_input_buffer_name: str):
 if __name__ == '__main__':
     # it should be OK to leave this uncommented, even on Pi
     s1 = shared_memory.SharedMemory(name='s1', create=True, size=6)
-    pack_data = pack(PACK_CODES['draw'], 255, 255, 15, 15, 0)
+    pack_data = pack_draw(255, 255, 15)
     my_memcpy(s1, pack_data)
     print(s1.buf)
     # main function
