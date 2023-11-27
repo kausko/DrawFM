@@ -1,6 +1,6 @@
 import multiprocessing
 from multiprocessing import shared_memory
-from sim_rx_drawing import rx_drawing
+from rx_qt import rx_qt_main_func
 # from sim_tx_drawing import tx_drawing
 from tx_qt import tx_qt_main_func
 from comm_simulator import CommunicationSimulator
@@ -29,7 +29,8 @@ if __name__ == "__main__":
 
 
     # communication_simulator = CommunicationSimulator(drop_rate=0.005, bitflip_rate=0.001)
-    communication_simulator = CommunicationSimulator(drop_rate=0.00, bitflip_rate=0.00)
+    # communication_simulator = CommunicationSimulator(drop_rate=0.1, bitflip_rate=0.1)
+    communication_simulator = CommunicationSimulator(drop_rate=0.0, bitflip_rate=0.0)
     # communication_simulator.set_buffer("101 101".encode('utf-8'))
 
 
@@ -38,5 +39,5 @@ if __name__ == "__main__":
     p2 = multiprocessing.Process(target=tx_qt_main_func, args=(s1.name,))
     p2.start()
 
-    p1 = multiprocessing.Process(target=rx_drawing, args=(s1.name, communication_simulator,))
+    p1 = multiprocessing.Process(target=rx_qt_main_func, args=(s1.name, communication_simulator,))
     p1.start()
