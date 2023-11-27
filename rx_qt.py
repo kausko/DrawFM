@@ -101,16 +101,20 @@ class MainWindow(QtWidgets.QMainWindow):
 
             elif msg == MSG_CODES['color']:
                 _, r, g, b, a = unpack(PACK_CODES['color'], rds[:4])
-                self.color = QtGui.QColor(r, g, b, a*16)
+                # very transparent colors were getting truncated to zero
+                if a == 0:
+                    a = 1
+                self.color = QtGui.QColor(r, g, b, (a)*16)
 
             elif msg == MSG_CODES['size']:
                 _, size, __ = unpack(PACK_CODES['size'], rds[:4])
                 self.brushSize = size
 
             elif msg == MSG_CODES['clear']:
-                canvas = QtGui.QPixmap(800, 600)
-                canvas.fill(Qt.white)
-                self.label.setPixmap(canvas)
+                pass
+                # canvas = QtGui.QPixmap(800, 600)
+                # canvas.fill(Qt.white)
+                # self.label.setPixmap(canvas)
 
             print({
                 'time': self.time.toString("hh:mm:ss.zzz"),
