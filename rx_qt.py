@@ -111,10 +111,9 @@ class MainWindow(QtWidgets.QMainWindow):
                 self.brushSize = size
 
             elif msg == MSG_CODES['clear']:
-                pass
-                # canvas = QtGui.QPixmap(800, 600)
-                # canvas.fill(Qt.white)
-                # self.label.setPixmap(canvas)
+                canvas = QtGui.QPixmap(800, 600)
+                canvas.fill(Qt.white)
+                self.label.setPixmap(canvas)
 
             print({
                 'time': self.time.toString("hh:mm:ss.zzz"),
