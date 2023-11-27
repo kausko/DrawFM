@@ -12,6 +12,10 @@
 # Add more try/execpt handling to catch errors
 # 
 
+
+#
+# Also incorporated some code from https://github.com/GrantTrebbin/si470x-RDS_Logger
+
 import smbus
 import time
 import RPi.GPIO as GPIO
@@ -191,6 +195,7 @@ class si4703Radio():
         self.si4703ReadRegisters()
         return ((self.si4703_registers[self.SI4703_READCHAN] & self.SI4703_READCHAN_MASK) + 875) # Mask out everything but the lower 10 bits
 
+    # modified from https://github.com/GrantTrebbin/si470x-RDS_Logger
     def si4703getRDS(self):
         z = "000000000000000"
         msg = {}
@@ -249,6 +254,7 @@ class si4703Radio():
                             # msg += chars
                             mi += 1
 
+    # modified from https://github.com/GrantTrebbin/si470x-RDS_Logger
     def si4703getRDSBytes(self):        
         z = "000000000000000"
         msg = {}
