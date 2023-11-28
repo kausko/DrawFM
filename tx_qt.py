@@ -82,7 +82,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.brushSize = DEFAULT_BRUSH_SIZE
 
         self.mySlider = QtWidgets.QSlider(QtCore.Qt.Orientation.Horizontal, self)
-        self.mySlider.setRange(1, 1023)
+        self.mySlider.setRange(1, 100)
         self.mySlider.setStyle(SliderProxyStyle(self.mySlider.style()))
         self.mySlider.sliderReleased.connect(self.brushSizeChangeEvent)
 
