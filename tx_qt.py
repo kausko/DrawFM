@@ -63,7 +63,9 @@ class MainWindow(QtWidgets.QMainWindow):
         super().__init__()
 
         self.shared_input_buffer_name = shared_input_buffer_name
-        self.shared_memory = shared_memory.SharedMemory(name=self.shared_input_buffer_name)
+        self.shared_memory = None
+        if self.shared_input_buffer_name is not None:
+            self.shared_memory = shared_memory.SharedMemory(name=self.shared_input_buffer_name)
 
         self.log_filename = None
         self.log_file = None
@@ -181,8 +183,8 @@ class MainWindow(QtWidgets.QMainWindow):
         '''PI: use above'''
 
         '''SIMULATOR: use below'''
-        # it should be OK to leave this uncommented, even on Pi
-        my_memcpy(self.shared_memory, coords)
+        if sim:
+            my_memcpy(self.shared_memory, coords)
         '''SIMULATOR: use above'''
 
         print_dictionary = {
@@ -210,10 +212,12 @@ def tx_qt_main_func(shared_input_buffer_name: str):
     app.exec()
 
 if __name__ == '__main__':
-    # it should be OK to leave this uncommented, even on Pi
-    s1 = shared_memory.SharedMemory(name='s1', create=True, size=6)
-    pack_data = pack_draw(255, 255, 15)
-    my_memcpy(s1, pack_data)
-    print(s1.buf)
-    # main function
-    tx_qt_main_func(s1.name)
+    shared_memory_name = None
+    if sim:
+        s1 = shared_memory.SharedMemory(name='s1', create=True, size=6)
+        pack_data = pack_draw(255, 255, 15)
+        my_memcpy(s1, pack_data)
+        print(s1.buf)
+        shared_memory_name = s1.name
+        # main function
+    tx_qt_main_func(shared_memory_name)

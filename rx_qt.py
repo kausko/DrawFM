@@ -31,7 +31,9 @@ class MainWindow(QtWidgets.QMainWindow):
         super().__init__()
 
         self.shared_input_buffer_name = shared_input_buffer_name
-        self.shared_memory = shared_memory.SharedMemory(name=self.shared_input_buffer_name)
+        self.shared_memory = None
+        if self.shared_input_buffer_name is not None:
+            self.shared_memory = shared_memory.SharedMemory(name=self.shared_input_buffer_name)
         self.communications_simulator = communications_simulator
 
         if LOG_DATA:
@@ -154,8 +156,11 @@ def rx_qt_main_func(shared_input_buffer_name: str, communications_simulator: Com
     app.exec_()
 
 if __name__ == '__main__':
-    s1 = shared_memory.SharedMemory(name='s1', create=True, size=6)
-    pack_data = pack_draw(255, 255, 15)
-    my_memcpy(s1, pack_data)
-    communication_simulator = CommunicationSimulator(drop_rate=0.01, bitflip_rate=0.01)
-    rx_qt_main_func(shared_input_buffer_name=s1.name, communications_simulator=communication_simulator)
+    shared_memory_name = None
+    if sim:
+        s1 = shared_memory.SharedMemory(name='s1', create=True, size=6)
+        pack_data = pack_draw(255, 255, 15)
+        my_memcpy(s1, pack_data)
+        communication_simulator = CommunicationSimulator(drop_rate=0.01, bitflip_rate=0.01)
+        shared_memory_name = s1.name
+    rx_qt_main_func(shared_memory_name, communications_simulator=communication_simulator)
