@@ -1,7 +1,6 @@
 import multiprocessing
 from multiprocessing import shared_memory
 from rx_qt import rx_qt_main_func
-# from sim_tx_drawing import tx_drawing
 from tx_qt import tx_qt_main_func
 from comm_simulator import CommunicationSimulator
 from time import sleep
