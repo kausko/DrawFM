@@ -3,13 +3,17 @@ from PyQt5 import QtGui, QtWidgets, QtCore
 from PyQt5.QtCore import Qt, QTime, QTimer
 from multiprocessing import shared_memory
 from binascii import hexlify
-from utils import DEFAULT_BG_COLOR, DEFAULT_BRUSH_SIZE, DEFAULT_PEN_COLOR, my_memcpy, pack_draw, pack_color, pack_size, pack_clear
+from utils import LOG_FOLDER, DEFAULT_BG_COLOR, DEFAULT_BRUSH_SIZE, DEFAULT_PEN_COLOR, my_memcpy, pack_draw, pack_color, pack_size, pack_clear
 from bitstruct import *
 import time
+from datetime import datetime
+import os
+import json
 from os import getenv
 from dotenv import load_dotenv
 load_dotenv()
 sim = getenv("SIM") == "True"
+LOG_DATA = getenv("LOG_DATA") == "True"
 
 if not sim:
     '''RASPBERRY PI: use below'''
@@ -60,6 +64,13 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.shared_input_buffer_name = shared_input_buffer_name
         self.shared_memory = shared_memory.SharedMemory(name=self.shared_input_buffer_name)
+
+        self.log_filename = None
+        self.log_file = None
+
+        if LOG_DATA:
+            self.log_filename = os.path.join(LOG_FOLDER, str(datetime.now()) + '-tx.log')
+            self.log_file = open(self.log_filename, 'w+')
 
         menubar = self.addToolBar("toolbar")
         font = self.font()
@@ -173,16 +184,24 @@ class MainWindow(QtWidgets.QMainWindow):
         # it should be OK to leave this uncommented, even on Pi
         my_memcpy(self.shared_memory, coords)
         '''SIMULATOR: use above'''
-        
-        print({
+
+        print_dictionary = {
             'time': self.time.toString("hh:mm:ss.zzz"),
+            'datetime': str(datetime.now()),
+            'binary': str(hexlify(coords)),
             # 'msg': msg,
             'last_x': self.last_x,
             'last_y': self.last_y,
             'line_code': self.line_code,
             'color': str(self.color.red()) + "," + str(self.color.green()) + "," + str(self.color.blue()) + "," + str(self.color.alpha()),
             'brushSize': self.brushSize
-        })
+        }
+
+        # logging
+        if LOG_DATA:
+            self.log_file.write(json.dumps(print_dictionary) + ',\n')
+        
+        print(print_dictionary)
 
 def tx_qt_main_func(shared_input_buffer_name: str):
     app = QtWidgets.QApplication(sys.argv)

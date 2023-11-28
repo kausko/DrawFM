@@ -1,6 +1,7 @@
 import numpy as np
 from bitstruct import pack
 from PyQt5.QtCore import Qt
+import os
 
 # memcpy
 def my_memcpy(shared_memory, data):
@@ -49,6 +50,7 @@ def bytes_to_ndarray_bool(msg: bytes):
 
     return np_bits
 
+LOG_FOLDER = os.path.join('logs')
 
 PACK_CODE = 'u4u28'
 

@@ -6,12 +6,16 @@ from multiprocessing import shared_memory
 from binascii import hexlify
 from PyQt5.QtWidgets import QWidget
 from comm_simulator import CommunicationSimulator
-from utils import DEFAULT_BG_COLOR, DEFAULT_BRUSH_SIZE, DEFAULT_PEN_COLOR, my_memcpy, PACK_CODE, PACK_CODES, MSG_CODES, pack_draw
+from utils import LOG_FOLDER, DEFAULT_BG_COLOR, DEFAULT_BRUSH_SIZE, DEFAULT_PEN_COLOR, my_memcpy, PACK_CODE, PACK_CODES, MSG_CODES, pack_draw
 from bitstruct import *
+import os
+from datetime import datetime
+import json
 from os import getenv
 from dotenv import load_dotenv
 load_dotenv()
 sim = getenv("SIM") == "True"
+LOG_DATA = getenv("LOG_DATA") == "True"
 
 
 if not sim:
@@ -29,6 +33,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.shared_input_buffer_name = shared_input_buffer_name
         self.shared_memory = shared_memory.SharedMemory(name=self.shared_input_buffer_name)
         self.communications_simulator = communications_simulator
+
+        if LOG_DATA:
+            self.log_filename = os.path.join(LOG_FOLDER, str(datetime.now()) + '-rx.log')
+            self.log_file = open(self.log_filename, 'w+')
 
         self.label = QtWidgets.QLabel()
         canvas = QtGui.QPixmap(800, 600)
@@ -114,17 +122,24 @@ class MainWindow(QtWidgets.QMainWindow):
                 canvas = QtGui.QPixmap(800, 600)
                 canvas.fill(Qt.white)
                 self.label.setPixmap(canvas)
-
-            print({
+            
+            print_dictionary = {
                 'time': self.time.toString("hh:mm:ss.zzz"),
+                'datetime': str(datetime.now()),
+                'binary': str(hexlify(rds)),
                 'msg': msg,
                 'last_x': self.last_x,
                 'last_y': self.last_y,
                 'line_code': self.line_code,
                 'color': str(self.color.red()) + "," + str(self.color.green()) + "," + str(self.color.blue()) + "," + str(self.color.alpha()),
                 'brushSize': self.brushSize
-            })
+            }
 
+            # logging
+            if LOG_DATA:
+                self.log_file.write(json.dumps(print_dictionary) + ',\n')
+            
+            print(print_dictionary)
 
         except Exception as e:
             print(e)
