@@ -14,8 +14,11 @@ if __name__ == "__main__":
     # initialize shared memory
     # NOTE: the size is the number of bytes
     # if we ever increase/decrease the number of bytes, we need to change this here & in the if __name__ == "main" functions
-    s1 = shared_memory.SharedMemory(name='s1', create=True, size=6)
-    
+    try:
+        s1 = shared_memory.SharedMemory(name='s1', create=True, size=6)
+    except FileExistsError:
+        # yoink the one that was hopefully already created correctly
+        s1 = shared_memory.SharedMemory(name='s1', create=False, size=6)    
     # s1.buf = pack(PACK_CODE, 255, 255, 255, 255)
     pack_data = pack(PACK_CODE, 255, 255, 255, 255)
     my_memcpy(s1, pack_data)

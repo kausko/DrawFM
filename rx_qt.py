@@ -159,7 +159,11 @@ if __name__ == '__main__':
     shared_memory_name = None
     communication_simulator = CommunicationSimulator(drop_rate=0.01, bitflip_rate=0.01)
     if sim:
-        s1 = shared_memory.SharedMemory(name='s1', create=True, size=6)
+        try:
+            s1 = shared_memory.SharedMemory(name='s1', create=True, size=6)
+        except FileExistsError:
+            # yoink the one that was hopefully already created correctly
+            s1 = shared_memory.SharedMemory(name='s1', create=False, size=6)
         pack_data = pack_draw(255, 255, 15)
         my_memcpy(s1, pack_data)
         shared_memory_name = s1.name
