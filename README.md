@@ -14,7 +14,14 @@ Minimum requirements:
 ## Installation
 
 ### Transmitter
-<!--TODO-->
+
+  GPIO Pin      |  si4703 Breakout
+--------------- | ----------------        
+5 GPIO3         | I2C SCL
+29  GPIO5       | RST
+3 GPIO2         | GPIO1              
+1 (Board 3.3v)  | 3.3V              
+6 (Board Gnd)   | GND  
 
 ### Receiver
   GPIO Pin      |  si4703 Breakout
