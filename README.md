@@ -53,6 +53,9 @@ sudo chmod +x <tx/rx>_qt.py # Only needs to be run once
 
 NOTE: Here, use `tx` for the transmitter and `rx` for the receiver.
 
+### Simulator mode
+The simulator mode allows you to run the transmitter and receiver code on the same computer. This is useful for testing the drawing code without needing the physical devices. To use simulator mode, set the `SIM` environment variable to `True`, and run `python sim_driver.py`. Check the `SIM_README.md` file for more details.
+
 ## Credits
 
 - https://github.com/ryedwards/si4703RaspberryPi - Library for controlling the Si4703 via I2C using Python on the Raspberry Pi.
