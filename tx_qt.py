@@ -14,6 +14,7 @@ from dotenv import load_dotenv
 load_dotenv()
 sim = getenv("SIM") == "True"
 LOG_DATA = getenv("LOG_DATA") == "True"
+EXPERIMENT_COUNTER = getenv("EXPERIMENT_COUNTER") == "True"
 
 if not sim:
     '''RASPBERRY PI: use below'''
@@ -61,6 +62,8 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def __init__(self, shared_input_buffer_name: str):
         super().__init__()
+
+        self.experiment_counter = 0
 
         self.shared_input_buffer_name = shared_input_buffer_name
         self.shared_memory = None
@@ -173,9 +176,14 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def send_coords(self):
         self.time = self.time.addMSecs(DELAY)
-        if (not len(self.coords)):
+        if (not len(self.coords)) and not EXPERIMENT_COUNTER:
             return
-        coords = self.coords.pop(0)
+        if not EXPERIMENT_COUNTER:
+            coords = self.coords.pop(0)
+
+        if EXPERIMENT_COUNTER:
+            coords = self.experiment_counter.to_bytes(4,byteorder='big')
+            self.experiment_counter += 1
 
         '''PI: use below'''
         if not sim:

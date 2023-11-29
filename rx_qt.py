@@ -164,7 +164,7 @@ if __name__ == '__main__':
         except FileExistsError:
             # yoink the one that was hopefully already created correctly
             s1 = shared_memory.SharedMemory(name='s1', create=False, size=6)
-        pack_data = pack_draw(255, 255, 15)
+        # pack_data = pack_draw(255, 255, 15)
         my_memcpy(s1, pack_data)
         shared_memory_name = s1.name
     rx_qt_main_func(shared_memory_name, communications_simulator=communication_simulator)
