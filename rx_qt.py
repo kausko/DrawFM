@@ -23,7 +23,7 @@ if not sim:
     from si4703Library import si4703Radio
     '''RASPBERRY PI: use above'''
 
-TICK = 40
+TICK = 0
 
 class MainWindow(QtWidgets.QMainWindow):
 
@@ -85,6 +85,22 @@ class MainWindow(QtWidgets.QMainWindow):
                 self.communications_simulator.set_buffer(tx_buffer)
                 rds = self.communications_simulator.get_buffer()
                 '''SIMULATOR: use above'''
+            
+            print_dictionary = {
+                'time': self.time.toString("hh:mm:ss.zzz"),
+                'datetime': str(datetime.now()),
+                'binary': str(hexlify(rds)),
+                # 'msg': msg,
+                # 'last_x': self.last_x,
+                # 'last_y': self.last_y,
+                # 'line_code': self.line_code,
+                # 'color': str(self.color.red()) + "," + str(self.color.green()) + "," + str(self.color.blue()) + "," + str(self.color.alpha()),
+                # 'brushSize': self.brushSize
+            }
+            
+            # logging
+            if LOG_DATA:
+                self.log_file.write(json.dumps(print_dictionary) + ',\n')
 
             if rds == self.last_rds:
                 return
@@ -124,22 +140,6 @@ class MainWindow(QtWidgets.QMainWindow):
                 canvas = QtGui.QPixmap(800, 600)
                 canvas.fill(Qt.white)
                 self.label.setPixmap(canvas)
-            
-            print_dictionary = {
-                'time': self.time.toString("hh:mm:ss.zzz"),
-                'datetime': str(datetime.now()),
-                'binary': str(hexlify(rds)),
-                'msg': msg,
-                'last_x': self.last_x,
-                'last_y': self.last_y,
-                'line_code': self.line_code,
-                'color': str(self.color.red()) + "," + str(self.color.green()) + "," + str(self.color.blue()) + "," + str(self.color.alpha()),
-                'brushSize': self.brushSize
-            }
-
-            # logging
-            if LOG_DATA:
-                self.log_file.write(json.dumps(print_dictionary) + ',\n')
             
             print(print_dictionary)
 
