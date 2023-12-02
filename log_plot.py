@@ -3,9 +3,40 @@ import matplotlib.pyplot as plt
 from datetime import datetime
 import json
 import os
+import glob
+from collections import defaultdict
+import pandas as pd
 
 cwd = os.getcwd()
-# rx_logfile_name = 'logs_rx/2023-11-29 01:55:41.005135-rx.log'
+
+rx_log_dir = os.path.join('logs_rx')
+tx_log_dir = os.path.join('logs_tx')
+
+log_comparisons = defaultdict(dict)
+
+rx_log_list = [each for each in os.listdir(rx_log_dir) if each.endswith('.log') and '_' in each]
+tx_log_list = [each for each in os.listdir(tx_log_dir) if each.endswith('.log') and '_' in each]
+
+for rx_file in rx_log_list:
+    experiment_distance = rx_file.split('_')[1]
+    experiment_delay = rx_file.split('_')[2].split('.')[0]
+
+    experiment_tag = experiment_distance + '_' + experiment_delay
+    print(experiment_tag)
+
+    log_comparisons[experiment_tag]['rx_filename'] = os.path.join(rx_log_dir, rx_file)
+
+for tx_file in tx_log_list:
+    experiment_distance = tx_file.split('_')[1]
+    experiment_delay = tx_file.split('_')[2].split('.')[0]
+
+    experiment_tag = experiment_distance + '_' + experiment_delay
+    print(experiment_tag)
+
+    log_comparisons[experiment_tag]['tx_filename'] = os.path.join(tx_log_dir, tx_file)
+
+print(json.dumps(log_comparisons, indent=2))
+
 # rx_logfile_name = os.path.join('logs_rx', '2023-11-29 17:56:26.168711-rx_1m_50ms.log')
 # tx_logfile_name = os.path.join('logs_tx', '2023-11-29 17:56:33.472757-tx_1m_50ms.log')
 
@@ -51,22 +82,40 @@ def parse_log_file(log_file, is_tx=False):
         time_val.append(date_time_object.timestamp())
 
     
-    return time_val, data
+    return pd.DataFrame({'time_val': time_val, 'data': data})
 
-rx_time_val, rx_data = parse_log_file(rx_log_rec)
-print(len(rx_time_val), len(rx_data))
-tx_time_val, tx_data = parse_log_file(tx_log_rec, is_tx=True)
+def plot_logs(rx_log_rec, tx_log_rec, experiment_tag):
 
-plt.scatter(rx_time_val, rx_data, marker='o', s=1)
-plt.scatter(tx_time_val, tx_data, marker='s', s=1)
+    rx_df = parse_log_file(rx_log_rec)
+    tx_df = parse_log_file(tx_log_rec, is_tx=True)
 
-# Label the axes
-plt.xlabel('Time (Unix Timestamp)')
-plt.ylabel('Integer Values')
+    print(rx_df)
 
-# set ylim to the range of tx data
-# (prevents spurious data from rx from affecting our scale)
-plt.ylim(0, max(tx_data))
+    tx_start_time = tx_df['time_val'].min()
+    tx_df['time_val'] -= tx_start_time
+    rx_df['time_val'] -= tx_start_time
 
-# Show the plot
-plt.show()
+    plt.scatter(rx_df['time_val'], rx_df['data'], marker='o', s=1)
+    plt.scatter(tx_df['time_val'], tx_df['data'], marker='s', s=1)
+
+    # Label the axes
+    plt.xlabel('Time (seconds after tx start)')
+    plt.ylabel('Sequence Number (integer)')
+    
+    plt.title(experiment_tag)
+
+    # set ylim to the range of tx data
+    # (prevents spurious data from rx from affecting our scale)
+    plt.ylim(0, max(tx_df['data']))
+
+    # Show the plot
+    plt.show()
+
+for experiment_tag in sorted(log_comparisons.keys()):
+    rx_log_filepath = log_comparisons[experiment_tag]['rx_filename']
+    tx_log_filepath = log_comparisons[experiment_tag]['tx_filename']
+
+    rx_log_rec = open(os.path.join(rx_log_filepath), 'r')
+    tx_log_rec = open(os.path.join(tx_log_filepath), 'r')
+
+    plot_logs(rx_log_rec, tx_log_rec, experiment_tag)
