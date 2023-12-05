@@ -120,7 +120,7 @@ for experiment_tag in sorted(log_comparisons.keys()):
     rx_log_rec = open(os.path.join(rx_log_filepath), 'r')
     tx_log_rec = open(os.path.join(tx_log_filepath), 'r')
 
-plot_logs(rx_log_rec, tx_log_rec, experiment_tag)
+    plot_logs(rx_log_rec, tx_log_rec, experiment_tag)
 
 
 
@@ -174,4 +174,4 @@ def plot_cdf(rx_log_rec, tx_log_rec, experiment_tag):
     plt.show()
 
     
-plot_cdf(rx_log_rec, tx_log_rec, experiment_tag)
+# plot_cdf(rx_log_rec, tx_log_rec, experiment_tag)
