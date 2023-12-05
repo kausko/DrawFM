@@ -6,6 +6,7 @@ import os
 import glob
 from collections import defaultdict
 import pandas as pd
+import numpy as np
 
 cwd = os.getcwd()
 
@@ -87,6 +88,7 @@ def parse_log_file(log_file, is_tx=False):
 def plot_logs(rx_log_rec, tx_log_rec, experiment_tag):
 
     rx_df = parse_log_file(rx_log_rec)
+    # rx_df = remove_dup(rx_log_rec)
     tx_df = parse_log_file(tx_log_rec, is_tx=True)
 
     print(rx_df)
@@ -118,4 +120,58 @@ for experiment_tag in sorted(log_comparisons.keys()):
     rx_log_rec = open(os.path.join(rx_log_filepath), 'r')
     tx_log_rec = open(os.path.join(tx_log_filepath), 'r')
 
-    plot_logs(rx_log_rec, tx_log_rec, experiment_tag)
+plot_logs(rx_log_rec, tx_log_rec, experiment_tag)
+
+
+
+def remove_dup(rx_log_rec):
+
+    rx_df = parse_log_file(rx_log_rec)
+
+    # Find and remove duplicate rows based on the 'data' column
+    rx_df_clean = rx_df.drop_duplicates(subset='data', keep='first')
+
+    # Print the dropped rows
+    dropped_rows = rx_df[rx_df.duplicated(subset='data', keep='first')]
+    print("\nDropped Rows:")
+    print(dropped_rows)
+    print("\n blah")
+
+    return rx_df_clean
+
+
+
+def plot_cdf(rx_log_rec, tx_log_rec, experiment_tag):
+
+    rx_df = remove_dup(rx_log_rec)
+    tx_df = parse_log_file(tx_log_rec, is_tx=True)
+
+    # Merge the DataFrames on the 'data' field
+    merged_df = pd.merge(rx_df, tx_df, on='data', suffixes=('_rx', '_tx'))
+
+    # Calculate the difference in 'time_val' for each row
+    merged_df['time_val_diff'] = merged_df['time_val_rx'] - merged_df['time_val_tx']
+
+    # Display the result
+    print(merged_df[['data', 'time_val_rx', 'time_val_tx', 'time_val_diff']])
+
+    hist, bin_edges = np.histogram(merged_df['time_val_diff'], bins=50, density=True)
+
+    # Find the PDF of the histogram   
+    pdf = hist / sum(hist)
+
+    # Calculate the CDF
+    cdf = np.cumsum(pdf)
+
+    # Plot CDF
+    plt.figure(figsize=(8, 6))
+    plt.plot(bin_edges[1:], cdf, label='CDF')
+    plt.title('Cumulative Distribution Function (CDF) of time_val_diff')
+    plt.xlabel('time_val_diff')
+    plt.ylabel('CDF')
+    plt.legend()
+    plt.grid(True)
+    plt.show()
+
+    
+plot_cdf(rx_log_rec, tx_log_rec, experiment_tag)
