@@ -113,17 +113,6 @@ def plot_logs(rx_log_rec, tx_log_rec, experiment_tag):
     # Show the plot
     plt.show()
 
-for experiment_tag in sorted(log_comparisons.keys()):
-    rx_log_filepath = log_comparisons[experiment_tag]['rx_filename']
-    tx_log_filepath = log_comparisons[experiment_tag]['tx_filename']
-
-    rx_log_rec = open(os.path.join(rx_log_filepath), 'r')
-    tx_log_rec = open(os.path.join(tx_log_filepath), 'r')
-
-    plot_logs(rx_log_rec, tx_log_rec, experiment_tag)
-
-
-
 def remove_dup(rx_log_rec):
 
     rx_df = parse_log_file(rx_log_rec)
@@ -138,8 +127,6 @@ def remove_dup(rx_log_rec):
     print("\n blah")
 
     return rx_df_clean
-
-
 
 def plot_cdf(rx_log_rec, tx_log_rec, experiment_tag):
 
@@ -166,12 +153,24 @@ def plot_cdf(rx_log_rec, tx_log_rec, experiment_tag):
     # Plot CDF
     plt.figure(figsize=(8, 6))
     plt.plot(bin_edges[1:], cdf, label='CDF')
-    plt.title('Cumulative Distribution Function (CDF) of time_val_diff')
+    plt.title(experiment_tag)
     plt.xlabel('time_val_diff')
     plt.ylabel('CDF')
     plt.legend()
     plt.grid(True)
     plt.show()
 
-    
-# plot_cdf(rx_log_rec, tx_log_rec, experiment_tag)
+for experiment_tag in sorted(log_comparisons.keys()):
+    rx_log_filepath = log_comparisons[experiment_tag]['rx_filename']
+    tx_log_filepath = log_comparisons[experiment_tag]['tx_filename']
+
+    rx_log_rec = open(os.path.join(rx_log_filepath), 'r')
+    tx_log_rec = open(os.path.join(tx_log_filepath), 'r')
+
+    plot_logs(rx_log_rec, tx_log_rec, experiment_tag)
+    rx_log_rec.seek(0)
+    tx_log_rec.seek(0)
+    plot_cdf(rx_log_rec, tx_log_rec, experiment_tag)
+    rx_log_rec.close()
+    tx_log_rec.close()
+
