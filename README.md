@@ -25,7 +25,7 @@ Physical Pin Location|   GPIO Pin      |  si4703 Breakout
 5               |   GPIO 3 SCL (BCM)     | I2C SCL
 29              |   GPIO 5           | RST           
 
-The Transmitter wiring has been adapted from [Adafruit's tutorial for si4713 on Arduino](https://learn.adafruit.com/adafruit-si4713-fm-radio-transmitter-with-rds-rdbs-support/test-and-usage)
+The Transmitter wiring has been adapted from [Adafruit's tutorial for si4713 on Arduino and Raspberry Pi](https://learn.adafruit.com/adafruit-si4713-fm-radio-transmitter-with-rds-rdbs-support/python-circuitpython#python-computer-wiring-2998729)
 
 ### Receiver
 Physical Pin Location|  GPIO Pin      |  si4703 Breakout
