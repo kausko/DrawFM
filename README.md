@@ -19,25 +19,25 @@ Please see [https://pinout.xyz/](https://pinout.xyz/)
 
 The Transmitter wiring has been adapted from [Adafruit's tutorial for si4713 on Arduino](https://learn.adafruit.com/adafruit-si4713-fm-radio-transmitter-with-rds-rdbs-support/test-and-usage)
 
-Board Pin Location|   GPIO Pin      |  si4703 Breakout
+Physical Pin Location|   GPIO Pin      |  si4703 Breakout
 --------------- |   --------------- | ----------------
 1 (Board 3.3V)  |   Board 3.3V      | VIN              
 6 (Board GND)   |   Board GND       | GND  
-3               |   2 SDA (BCM)     | I2C SDA         
-5               |   3 SCL (BCM)     | I2C SCL
-29              |   GPIO5           | RST            
+3               |   GPIO 2 SDA (BCM)     | I2C SDA         
+5               |   GPIO 3 SCL (BCM)     | I2C SCL
+29              |   GPIO 5           | RST            
  
 The Receiver wiring is from [https://github.com/ryedwards/si4703RaspberryPi#installation](https://github.com/ryedwards/si4703RaspberryPi#installation)
 
 ### Receiver
-Board Pin Location|  GPIO Pin      |  si4703 Breakout
+Physical Pin Location|  GPIO Pin      |  si4703 Breakout
 --------------- | --------------- | ----------------
 1 (Board 3.3V)  | Board 3.3V      | 3.3V              
 6 (Board Gnd)   | Board GND       | GND  
-3               | 2 SDA (BCM)     | I2C SDA         
-5               | 3 SCL (BCM)     | I2C SCL
-29              | 5  (BCM)        | RST
-35              | 19 (BCM)        | GPIO2
+3               | GPIO 2 SDA (BCM)     | I2C SDA         
+5               | GPIO 3 SCL (BCM)     | I2C SCL
+29              | GPIO 5  (BCM)        | RST
+35              | GPIO 19 (BCM)        | GPIO2
 
 ### Software
 
