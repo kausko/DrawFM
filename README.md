@@ -67,9 +67,9 @@ NOTE: Here, use `tx` for the transmitter and `rx` for the receiver.
 The simulator mode allows you to run the transmitter and receiver code on the same computer. This is useful for testing the drawing code without needing the physical devices. To use simulator mode, set the `SIM` environment variable to `True`, and run `python sim_driver.py`. Check the `SIM_README.md` file for more details.
 
 ## Credits
-
-- https://github.com/ryedwards/si4703RaspberryPi - Library for controlling the Si4703 via I2C using Python on the Raspberry Pi.
-- https://github.com/GrantTrebbin/si470x-RDS_Logger - Code for reading the RDS data from the Si4703.
+- https://docs.circuitpython.org/projects/si4713/en/latest/# - Library for controlling the Si4713 FM Transmitter via I2C using Python on the Raspberry Pi
+- https://github.com/ryedwards/si4703RaspberryPi - Library for controlling the Si4703 Receiver via I2C using Python on the Raspberry Pi.
+- https://github.com/GrantTrebbin/si470x-RDS_Logger - Code for reading recieved RDS data from the Si4703.
 
 ## License
 
