@@ -17,6 +17,8 @@ Please see [https://pinout.xyz/](https://pinout.xyz/)
 
 ### Transmitter
 
+The Transmitter wiring has been adapted from [Adafruit's tutorial for si4713 on Arduino](https://learn.adafruit.com/adafruit-si4713-fm-radio-transmitter-with-rds-rdbs-support/test-and-usage)
+
 Board Pin Location|   GPIO Pin      |  si4703 Breakout
 --------------- |   --------------- | ----------------
 1 (Board 3.3V)  |   Board 3.3V      | VIN              
@@ -25,6 +27,7 @@ Board Pin Location|   GPIO Pin      |  si4703 Breakout
 5               |   3 SCL (BCM)     | I2C SCL
 29              |   GPIO5           | RST            
  
+The Receiver wiring is from [https://github.com/ryedwards/si4703RaspberryPi#installation](https://github.com/ryedwards/si4703RaspberryPi#installation)
 
 ### Receiver
 Board Pin Location|  GPIO Pin      |  si4703 Breakout
