@@ -13,25 +13,28 @@ Minimum requirements:
 
 ## Installation
 
+Please see [https://pinout.xyz/](https://pinout.xyz/)
+
 ### Transmitter
 
-  GPIO Pin      |  si4703 Breakout
---------------- | ----------------        
-5 GPIO3         | I2C SCL
-29  GPIO5       | RST
-3 GPIO2         | GPIO1              
-1 (Board 3.3v)  | 3.3V              
-6 (Board Gnd)   | GND  
+Board Pin Location|   GPIO Pin      |  si4703 Breakout
+--------------- |   --------------- | ----------------
+1 (Board 3.3V)  |   Board 3.3V      | VIN              
+6 (Board GND)   |   Board GND       | GND  
+3               |   2 SDA (BCM)     | I2C SDA         
+5               |   3 SCL (BCM)     | I2C SCL
+29              |   GPIO5           | RST            
+ 
 
 ### Receiver
-  GPIO Pin      |  si4703 Breakout
---------------- | ----------------
-2 SDA (BCM)     | I2C SDA         
-3 SCL (BCM)     | I2C SCL
-5  (BCM)        | RST
-19 (BCM)        | GPIO2              
-1 (Board 3.3v)  | 3.3V              
-6 (Board Gnd)   | GND             
+Board Pin Location|  GPIO Pin      |  si4703 Breakout
+--------------- | --------------- | ----------------
+1 (Board 3.3V)  | Board 3.3V      | 3.3V              
+6 (Board Gnd)   | Board GND       | GND  
+3               | 2 SDA (BCM)     | I2C SDA         
+5               | 3 SCL (BCM)     | I2C SCL
+29              | 5  (BCM)        | RST
+35              | 19 (BCM)        | GPIO2
 
 ### Software
 
