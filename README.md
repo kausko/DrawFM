@@ -32,8 +32,8 @@ Physical Pin Location|  GPIO Pin      |  si4703 Breakout
 --------------- | --------------- | ----------------
 1 (Board 3.3V)  | Board 3.3V      | 3.3V              
 6 (Board GND)   | Board GND       | GND  
-3               | GPIO 2 SDA (BCM)     | I2C SDA         
-5               | GPIO 3 SCL (BCM)     | I2C SCL
+3               | GPIO 2 SDA (BCM)     | I2C SDA "SDIO"        
+5               | GPIO 3 SCL (BCM)     | I2C SCL "SCLK"
 29              | GPIO 5  (BCM)        | RST
 35              | GPIO 19 (BCM)        | GPIO2
 
